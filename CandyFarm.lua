@@ -13,28 +13,28 @@ local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 local Theme = {
-    WindowBg = Color3.fromRGB(22, 18, 28),
-    TitleBarBg = Color3.fromRGB(32, 26, 42),
-    ContentBg = Color3.fromRGB(22, 18, 28),
-    TabActiveBg = Color3.fromRGB(255, 125, 40),
-    TabInactiveBg = Color3.fromRGB(42, 34, 55),
-    TabHoverBg = Color3.fromRGB(62, 52, 78),
-    TabTextActive = Color3.fromRGB(255, 255, 255),
-    TabTextInactive = Color3.fromRGB(190, 185, 205),
-    Text = Color3.fromRGB(240, 238, 245),
-    TextMuted = Color3.fromRGB(150, 145, 168),
-    SeparatorLine = Color3.fromRGB(55, 45, 72),
-    ButtonPrimary = Color3.fromRGB(255, 125, 40),
-    ButtonDanger = Color3.fromRGB(230, 65, 65),
-    ButtonSuccess = Color3.fromRGB(90, 200, 110),
-    ButtonNeutral = Color3.fromRGB(72, 58, 95),
-    CheckOn = Color3.fromRGB(255, 125, 40),
-    CheckOff = Color3.fromRGB(48, 40, 62),
-    CheckBorder = Color3.fromRGB(70, 58, 90),
-    Border = Color3.fromRGB(58, 47, 78),
-    ScrollThumb = Color3.fromRGB(255, 125, 40),
-    NotifBg = Color3.fromRGB(32, 26, 42),
-    NotifBorder = Color3.fromRGB(58, 47, 78),
+    WindowBg = Color3.fromRGB(18, 12, 24),
+    TitleBarBg = Color3.fromRGB(34, 20, 46),
+    ContentBg = Color3.fromRGB(18, 12, 24),
+    TabActiveBg = Color3.fromRGB(255, 122, 30),
+    TabInactiveBg = Color3.fromRGB(50, 35, 65),
+    TabHoverBg = Color3.fromRGB(80, 55, 105),
+    TabTextActive = Color3.fromRGB(255, 250, 240),
+    TabTextInactive = Color3.fromRGB(170, 155, 185),
+    Text = Color3.fromRGB(245, 240, 230),
+    TextMuted = Color3.fromRGB(170, 155, 185),
+    SeparatorLine = Color3.fromRGB(70, 45, 95),
+    ButtonPrimary = Color3.fromRGB(255, 122, 30),
+    ButtonDanger = Color3.fromRGB(220, 50, 50),
+    ButtonSuccess = Color3.fromRGB(120, 200, 90),
+    ButtonNeutral = Color3.fromRGB(80, 55, 105),
+    CheckOn = Color3.fromRGB(255, 122, 30),
+    CheckOff = Color3.fromRGB(50, 35, 65),
+    CheckBorder = Color3.fromRGB(90, 65, 120),
+    Border = Color3.fromRGB(70, 45, 95),
+    ScrollThumb = Color3.fromRGB(255, 122, 30),
+    NotifBg = Color3.fromRGB(34, 20, 46),
+    NotifBorder = Color3.fromRGB(70, 45, 95),
 }
 
 local function Tween(instance, duration, goals, easingStyle, easingDirection)
@@ -75,46 +75,58 @@ local notificationCounter = 0
 local function ShowNotification(title, message, notificationType, duration)
     notificationCounter = notificationCounter + 1
     local currentOrder = notificationCounter
+
     local accentColor = Theme.ButtonPrimary
+    local titleEmoji = "👻"
+
     if notificationType == "success" then
         accentColor = Theme.ButtonSuccess
+        titleEmoji = "🎃"
     elseif notificationType == "error" then
         accentColor = Theme.ButtonDanger
+        titleEmoji = "💀"
     end
-    
-    local notificationFrame = Instance.new("Frame")
-    notificationFrame.Name = "Notification_" .. tostring(currentOrder)
-    notificationFrame.Size = UDim2.new(1, 0, 0, 76)
-    notificationFrame.Position = UDim2.new(1.5, 0, 0, 0)
-    notificationFrame.BackgroundColor3 = Theme.NotifBg
-    notificationFrame.BackgroundTransparency = 0.3
-    notificationFrame.BorderSizePixel = 0
-    notificationFrame.LayoutOrder = -currentOrder
-    notificationFrame.Parent = NotificationContainer
-    
-    local notificationCorner = Instance.new("UICorner")
-    notificationCorner.CornerRadius = UDim.new(0, 10)
-    notificationCorner.Parent = notificationFrame
-    
-    local notificationStroke = Instance.new("UIStroke")
-    notificationStroke.Color = Theme.NotifBorder
-    notificationStroke.Thickness = 1
-    notificationStroke.Transparency = 0.3
-    notificationStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    notificationStroke.Parent = notificationFrame
-    
+
+    local holder = Instance.new("Frame")
+    holder.Name = "NotificationHolder_" .. tostring(currentOrder)
+    holder.Size = UDim2.new(1, 0, 0, 76)
+    holder.BackgroundTransparency = 1
+    holder.BorderSizePixel = 0
+    holder.LayoutOrder = -currentOrder
+    holder.Parent = NotificationContainer
+
+    local card = Instance.new("Frame")
+    card.Name = "Card"
+    card.Size = UDim2.new(1, 0, 1, 0)
+    card.Position = UDim2.new(1.5, 0, 0, 0)
+    card.BackgroundColor3 = Theme.NotifBg
+    card.BackgroundTransparency = 0.3
+    card.BorderSizePixel = 0
+    card.Parent = holder
+
+    local cardCorner = Instance.new("UICorner")
+    cardCorner.CornerRadius = UDim.new(0, 10)
+    cardCorner.Parent = card
+
+    local cardStroke = Instance.new("UIStroke")
+    cardStroke.Color = Theme.NotifBorder
+    cardStroke.Thickness = 1
+    cardStroke.Transparency = 0.3
+    cardStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    cardStroke.Parent = card
+
     local accentBar = Instance.new("Frame")
     accentBar.Name = "Accent"
     accentBar.Size = UDim2.new(0, 4, 1, -14)
     accentBar.Position = UDim2.new(0, 6, 0, 7)
     accentBar.BackgroundColor3 = accentColor
     accentBar.BorderSizePixel = 0
-    accentBar.Parent = notificationFrame
-    
+    accentBar.Parent = card
+
     local accentBarCorner = Instance.new("UICorner")
     accentBarCorner.CornerRadius = UDim.new(0, 2)
     accentBarCorner.Parent = accentBar
-    
+
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Name = "Title"
     titleLabel.Size = UDim2.new(1, -30, 0, 22)
@@ -124,9 +136,9 @@ local function ShowNotification(title, message, notificationType, duration)
     titleLabel.TextSize = 14
     titleLabel.TextColor3 = Theme.Text
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.Text = title
-    titleLabel.Parent = notificationFrame
-    
+    titleLabel.Text = titleEmoji .. " " .. title
+    titleLabel.Parent = card
+
     local messageLabel = Instance.new("TextLabel")
     messageLabel.Name = "Message"
     messageLabel.Size = UDim2.new(1, -30, 1, -46)
@@ -139,64 +151,77 @@ local function ShowNotification(title, message, notificationType, duration)
     messageLabel.TextYAlignment = Enum.TextYAlignment.Top
     messageLabel.TextWrapped = true
     messageLabel.Text = message
-    messageLabel.Parent = notificationFrame
-    
+    messageLabel.Parent = card
+
     local progressTrack = Instance.new("Frame")
     progressTrack.Name = "ProgressTrack"
     progressTrack.Size = UDim2.new(1, -24, 0, 2)
     progressTrack.Position = UDim2.new(0, 12, 1, -6)
     progressTrack.BackgroundColor3 = Theme.SeparatorLine
     progressTrack.BorderSizePixel = 0
-    progressTrack.Parent = notificationFrame
-    
+    progressTrack.Parent = card
+
     local progressTrackCorner = Instance.new("UICorner")
     progressTrackCorner.CornerRadius = UDim.new(0, 1)
     progressTrackCorner.Parent = progressTrack
-    
+
     local progressBar = Instance.new("Frame")
     progressBar.Name = "ProgressBar"
     progressBar.Size = UDim2.new(1, 0, 1, 0)
     progressBar.BackgroundColor3 = accentColor
     progressBar.BorderSizePixel = 0
     progressBar.Parent = progressTrack
-    
+
     local progressBarCorner = Instance.new("UICorner")
     progressBarCorner.CornerRadius = UDim.new(0, 1)
     progressBarCorner.Parent = progressBar
-    
-    Tween(notificationFrame, 0.3, {
+
+    Tween(card, 0.3, {
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundTransparency = 0,
     }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    
+
     Tween(progressBar, duration, {
         Size = UDim2.new(0, 0, 1, 0),
     }, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
-    
+
     task.delay(duration, function()
-        if not notificationFrame or not notificationFrame.Parent then
+        if not holder or not holder.Parent then
             return
         end
-        Tween(notificationFrame, 0.25, {
+
+        Tween(card, 0.25, {
             Position = UDim2.new(1.5, 0, 0, 0),
             BackgroundTransparency = 0.3,
         }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-        for _, descendant in pairs(notificationFrame:GetDescendants()) do
-            if descendant:IsA("TextLabel") then
-                Tween(descendant, 0.2, {
-                    TextTransparency = 1,
-                })
-            elseif descendant:IsA("Frame") then
-                if descendant.Name == "Accent" or descendant.Name == "ProgressBar" then
-                    Tween(descendant, 0.2, {
-                        BackgroundTransparency = 1,
-                    })
-                end
-            end
-        end
+
+        Tween(accentBar, 0.2, {
+            BackgroundTransparency = 1,
+        })
+
+        Tween(cardStroke, 0.2, {
+            Transparency = 1,
+        })
+
+        Tween(titleLabel, 0.2, {
+            TextTransparency = 1,
+        })
+
+        Tween(messageLabel, 0.2, {
+            TextTransparency = 1,
+        })
+
+        Tween(progressTrack, 0.2, {
+            BackgroundTransparency = 1,
+        })
+
+        Tween(progressBar, 0.2, {
+            BackgroundTransparency = 1,
+        })
+
         task.delay(0.3, function()
-            if notificationFrame and notificationFrame.Parent then
-                notificationFrame:Destroy()
+            if holder and holder.Parent then
+                holder:Destroy()
             end
         end)
     end)
@@ -224,17 +249,22 @@ local candyDataNames = {
 
 local function getDataValue(dataName)
     local playerData = LocalPlayer:FindFirstChild("Data")
+
     if not playerData then
         return 0
     end
+
     local dataValue = playerData:FindFirstChild(dataName)
+
     if not dataValue then
         return 0
     end
+
     return dataValue.Value
 end
 
 local initialCandyValues = {}
+
 for _, candyInfo in ipairs(candyDataNames) do
     initialCandyValues[candyInfo.key] = getDataValue(candyInfo.dataName)
 end
@@ -281,17 +311,23 @@ end
 
 local function setItemGainedScriptEnabled(isEnabled)
     local itemGainedGui = PlayerGui:FindFirstChild("ItemGained")
+
     if not itemGainedGui then
         return
     end
+
     local displayGainedItem = itemGainedGui:FindFirstChild("DisplayGainedItem")
+
     if not displayGainedItem then
         return
     end
+
     local itemLocalScript = displayGainedItem:FindFirstChild("LocalScript")
+
     if not itemLocalScript then
         return
     end
+
     itemLocalScript.Disabled = not isEnabled
 end
 
@@ -299,6 +335,7 @@ local function forceDoorIntoPlayer(doorPart, walkSpeed)
     if forcedPartConnections[doorPart] then
         return
     end
+
     forcedPartConnections[doorPart] = RunService.Heartbeat:Connect(function()
         if not isFarming or not doorPart or not doorPart.Parent then
             if forcedPartConnections[doorPart] then
@@ -307,10 +344,16 @@ local function forceDoorIntoPlayer(doorPart, walkSpeed)
             end
             return
         end
+
+        if not currentHumanoid or not currentRootPart then
+            return
+        end
+
         doorPart.CFrame = currentRootPart.CFrame
         doorPart.Size = Vector3.new(10, 10, 10)
         doorPart.CanCollide = false
         doorPart.Transparency = 1
+
         if walkSpeed ~= 0 then
             currentHumanoid.WalkSpeed = walkSpeed
         end
@@ -318,8 +361,13 @@ local function forceDoorIntoPlayer(doorPart, walkSpeed)
 end
 
 local function performAutoFarm()
+    if not currentHumanoid or not currentRootPart then
+        return
+    end
+
     local savedWalkSpeed = currentHumanoid.WalkSpeed
     local allDescendants = Houses:GetDescendants()
+
     for _, descendant in ipairs(allDescendants) do
         if descendant.Name == "DoorInnerTouch" and descendant:IsA("BasePart") then
             if not descendant:GetAttribute("Forced") then
@@ -329,12 +377,24 @@ local function performAutoFarm()
             end
         end
     end
+
     for _, descendant in ipairs(allDescendants) do
         if descendant.Name == "GiantHand" then
             descendant:Destroy()
         end
     end
 end
+
+local camera = workspace.CurrentCamera
+
+while not camera do
+    task.wait()
+    camera = workspace.CurrentCamera
+end
+
+local viewportSize = camera.ViewportSize
+local windowWidth = math.floor(viewportSize.X / 8)
+local windowHeight = math.floor(viewportSize.Y / 2)
 
 local MainGui = Instance.new("ScreenGui")
 MainGui.Name = "CandyFarmGUI"
@@ -344,12 +404,9 @@ MainGui.DisplayOrder = 100
 MainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 MainGui.Parent = PlayerGui
 
-local WindowWidth = 480
-local WindowHeight = 680
-
 local Window = Instance.new("Frame")
 Window.Name = "Window"
-Window.Size = UDim2.fromOffset(WindowWidth, WindowHeight)
+Window.Size = UDim2.fromOffset(windowWidth, windowHeight)
 Window.BackgroundColor3 = Theme.WindowBg
 Window.BorderSizePixel = 0
 Window.Active = true
@@ -366,12 +423,9 @@ WindowStroke.Transparency = 0.3
 WindowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 WindowStroke.Parent = Window
 
-local viewportSize = workspace.CurrentCamera.ViewportSize
-Window.Position = UDim2.new(
-    0,
-    math.floor((viewportSize.X - WindowWidth) / 2),
-    0,
-    math.floor((viewportSize.Y - WindowHeight) / 2)
+Window.Position = UDim2.fromOffset(
+    math.floor((viewportSize.X - windowWidth) / 2),
+    math.floor((viewportSize.Y - windowHeight) / 2)
 )
 
 local TitleBar = Instance.new("Frame")
@@ -403,10 +457,10 @@ TitleText.Size = UDim2.new(1, -80, 0, 24)
 TitleText.Position = UDim2.new(0, 20, 0, 8)
 TitleText.BackgroundTransparency = 1
 TitleText.Font = Enum.Font.GothamBold
-TitleText.TextSize = 18
+TitleText.TextSize = 16
 TitleText.TextColor3 = Theme.Text
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
-TitleText.Text = "Candy Farm"
+TitleText.Text = "🎃 Candy Farm"
 TitleText.Parent = TitleBar
 
 local SubtitleText = Instance.new("TextLabel")
@@ -415,10 +469,10 @@ SubtitleText.Size = UDim2.new(1, -80, 0, 14)
 SubtitleText.Position = UDim2.new(0, 20, 0, 28)
 SubtitleText.BackgroundTransparency = 1
 SubtitleText.Font = Enum.Font.GothamMedium
-SubtitleText.TextSize = 10
+SubtitleText.TextSize = 9
 SubtitleText.TextColor3 = Theme.TextMuted
 SubtitleText.TextXAlignment = Enum.TextXAlignment.Left
-SubtitleText.Text = "Halloween 2025 Edition"
+SubtitleText.Text = "👻 Halloween 2025 Edition 👻"
 SubtitleText.Parent = TitleBar
 
 local CloseButton = Instance.new("TextButton")
@@ -427,7 +481,7 @@ CloseButton.Size = UDim2.fromOffset(30, 30)
 CloseButton.Position = UDim2.new(1, -40, 0, 10)
 CloseButton.BackgroundColor3 = Theme.ButtonDanger
 CloseButton.BorderSizePixel = 0
-CloseButton.Text = "X"
+CloseButton.Text = "✕"
 CloseButton.Font = Enum.Font.GothamBold
 CloseButton.TextSize = 14
 CloseButton.TextColor3 = Theme.Text
@@ -458,6 +512,7 @@ TitleBar.InputBegan:Connect(function(input)
     if input.Target == CloseButton then
         return
     end
+
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         isDragging = true
         dragStartMouse = Vector2.new(input.Position.X, input.Position.Y)
@@ -469,15 +524,19 @@ UserInputService.InputChanged:Connect(function(input)
     if not isDragging then
         return
     end
+
     if input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then
         return
     end
+
     if not Window or not Window.Parent then
         isDragging = false
         return
     end
+
     local currentMouse = Vector2.new(input.Position.X, input.Position.Y)
     local delta = currentMouse - dragStartMouse
+
     Window.Position = UDim2.new(
         dragStartPosition.X.Scale,
         dragStartPosition.X.Offset + delta.X,
@@ -532,6 +591,7 @@ local function switchTab(tabName)
     if activeTabName == tabName then
         return
     end
+
     for name, tabInfo in pairs(tabs) do
         if name == tabName then
             tabInfo.Button.BackgroundColor3 = Theme.TabActiveBg
@@ -543,6 +603,7 @@ local function switchTab(tabName)
             tabInfo.Content.Visible = false
         end
     end
+
     activeTabName = tabName
 end
 
@@ -565,7 +626,7 @@ local function createTab(tabKey, displayName)
     tabTextLabel.Size = UDim2.new(1, 0, 1, 0)
     tabTextLabel.BackgroundTransparency = 1
     tabTextLabel.Font = Enum.Font.GothamBold
-    tabTextLabel.TextSize = 13
+    tabTextLabel.TextSize = 10
     tabTextLabel.TextColor3 = Theme.TabTextInactive
     tabTextLabel.Text = displayName
     tabTextLabel.Parent = tabButton
@@ -626,16 +687,18 @@ local function createLabel(tab, text, layoutOrder, colorOverride, wrapped)
     label.Size = UDim2.new(1, 0, 0, wrapped and 0 or 22)
     label.BackgroundTransparency = 1
     label.Font = Enum.Font.GothamMedium
-    label.TextSize = 13
+    label.TextSize = 12
     label.TextColor3 = colorOverride or Theme.Text
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.TextYAlignment = Enum.TextYAlignment.Top
     label.TextWrapped = wrapped or false
     label.Text = text
     label.LayoutOrder = layoutOrder
+
     if wrapped then
         label.AutomaticSize = Enum.AutomaticSize.Y
     end
+
     label.Parent = tab.Content
     return label
 end
@@ -653,7 +716,7 @@ local function createSeparator(tab, text, layoutOrder)
     separatorText.Size = UDim2.new(1, 0, 0, 20)
     separatorText.BackgroundTransparency = 1
     separatorText.Font = Enum.Font.GothamBold
-    separatorText.TextSize = 11
+    separatorText.TextSize = 10
     separatorText.TextColor3 = Theme.TextMuted
     separatorText.TextXAlignment = Enum.TextXAlignment.Left
     separatorText.Text = string.upper(text)
@@ -682,7 +745,7 @@ local function createButton(tab, text, layoutOrder, initialColor, callback)
     button.BorderSizePixel = 0
     button.Text = text
     button.Font = Enum.Font.GothamBold
-    button.TextSize = 14
+    button.TextSize = 13
     button.TextColor3 = Theme.Text
     button.AutoButtonColor = false
     button.LayoutOrder = layoutOrder
@@ -796,7 +859,7 @@ local function createCheckbox(tab, text, initialValue, layoutOrder, callback)
     checkboxLabel.Position = UDim2.new(0, 34, 0, 0)
     checkboxLabel.BackgroundTransparency = 1
     checkboxLabel.Font = Enum.Font.GothamMedium
-    checkboxLabel.TextSize = 13
+    checkboxLabel.TextSize = 12
     checkboxLabel.TextColor3 = Theme.Text
     checkboxLabel.TextXAlignment = Enum.TextXAlignment.Left
     checkboxLabel.Text = text
@@ -862,12 +925,24 @@ local farmButton = createButton(FarmTab, "Start Candy Farm", 4, Theme.ButtonPrim
         isFarming = false
         buttonApi.SetText("Start Candy Farm")
         buttonApi.SetColor(Theme.ButtonPrimary)
+
+        local doorsToRelease = {}
+
         for doorPart, connection in pairs(forcedPartConnections) do
+            table.insert(doorsToRelease, doorPart)
+        end
+
+        for _, doorPart in ipairs(doorsToRelease) do
+            local connection = forcedPartConnections[doorPart]
             if connection then
                 connection:Disconnect()
             end
+            if doorPart and doorPart.Parent then
+                doorPart:SetAttribute("Forced", nil)
+            end
             forcedPartConnections[doorPart] = nil
         end
+
         ShowNotification("Candy Farm", "Candy farm stopped.", "info", 3)
     end
 end)
@@ -881,6 +956,7 @@ local totalCandyLabel = createLabel(FarmTab, "Total Candy: 0", 9)
 
 local candyLabels = {}
 local candyLabelOrder = 10
+
 for _, candyInfo in ipairs(candyDataNames) do
     candyLabels[candyInfo.key] = createLabel(
         FarmTab,
@@ -894,8 +970,12 @@ housesAddedConnection = Houses.ChildAdded:Connect(function()
     if not isFarming then
         return
     end
+
     task.wait(0.3)
-    performAutoFarm()
+
+    if isFarming then
+        performAutoFarm()
+    end
 end)
 
 local function formatElapsedTime(totalSeconds)
@@ -923,26 +1003,34 @@ task.spawn(function()
     while isScriptActive do
         if isFarming then
             elapsedSeconds = elapsedSeconds + 1
+
             if timeElapsedLabel then
                 timeElapsedLabel.Text = "Time Elapsed: " .. formatElapsedTime(elapsedSeconds)
             end
+
             local totalGained = 0
+
             for _, candyInfo in ipairs(candyDataNames) do
                 local currentValue = getDataValue(candyInfo.dataName)
                 local gainedAmount = currentValue - initialCandyValues[candyInfo.key]
                 totalGained = totalGained + gainedAmount
+
                 local candyLabel = candyLabels[candyInfo.key]
                 if candyLabel then
                     candyLabel.Text = string.format("%s: %d", candyInfo.label, gainedAmount)
                 end
             end
+
             local fakeHouseCount = totalHousesClaimed - totalGained
+
             if totalHousesLabel then
                 totalHousesLabel.Text = string.format("Total Houses: %d", totalHousesClaimed)
             end
+
             if fakeHousesLabel then
                 fakeHousesLabel.Text = string.format("Fake Houses: %d", fakeHouseCount)
             end
+
             if totalCandyLabel then
                 totalCandyLabel.Text = string.format("Total Candy: %d", totalGained)
             end
@@ -951,7 +1039,7 @@ task.spawn(function()
     end
 end)
 
-local AutoTab = createTab("AutoFarm", "Auto Farm")
+local AutoTab = createTab("AutoFarm", "AutoFarm")
 
 createSeparator(AutoTab, "Candy Farm with Server Hop", 1)
 
@@ -960,23 +1048,31 @@ local autoFarmButton = createButton(AutoTab, "Start Auto Farm", 2, Theme.ButtonP
         ShowNotification("Auto Farm", "Auto farm is already running.", "info", 2)
         return
     end
+
     buttonApi.SetText("Starting...")
     buttonApi.SetColor(Theme.ButtonNeutral)
+
     isFarming = true
     performAutoFarm()
+
     local loadSuccess = pcall(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/Fantom233/BABFT/refs/heads/main/LoopCandyFarm.lua"))()
     end)
+
     if not loadSuccess then
         isFarming = false
         buttonApi.SetText("Failed to load")
         buttonApi.SetColor(Theme.ButtonDanger)
+
         task.wait(2)
+
         buttonApi.SetText("Start Auto Farm")
         buttonApi.SetColor(Theme.ButtonPrimary)
+
         ShowNotification("Auto Farm", "Failed to start auto farm. Please try again.", "error", 4)
         return
     end
+
     hasAutoFarmStarted = true
     buttonApi.SetText("Started!")
     buttonApi.SetColor(Theme.ButtonSuccess)
@@ -1043,7 +1139,7 @@ createSeparator(CreditsTab, "Note", 3)
 
 createLabel(
     CreditsTab,
-    "If you enjoy this script, share it with your friends. Thanks for using it.",
+    "If you enjoy this script, share it with your friends. Thanks for using it. Happy Halloween!",
     4,
     Theme.TextMuted,
     true
@@ -1057,23 +1153,38 @@ CloseButton.MouseButton1Click:Connect(function()
     if isClosing then
         return
     end
+
     isClosing = true
     isScriptActive = false
     isFarming = false
+
     if antiAfkConnection then
         antiAfkConnection:Disconnect()
         antiAfkConnection = nil
     end
+
     if housesAddedConnection then
         housesAddedConnection:Disconnect()
         housesAddedConnection = nil
     end
+
+    local doorsToRelease = {}
+
     for doorPart, connection in pairs(forcedPartConnections) do
+        table.insert(doorsToRelease, doorPart)
+    end
+
+    for _, doorPart in ipairs(doorsToRelease) do
+        local connection = forcedPartConnections[doorPart]
         if connection then
             connection:Disconnect()
         end
+        if doorPart and doorPart.Parent then
+            doorPart:SetAttribute("Forced", nil)
+        end
         forcedPartConnections[doorPart] = nil
     end
+
     setItemGainedScriptEnabled(true)
     MainGui:Destroy()
     NotificationGui:Destroy()
@@ -1083,5 +1194,6 @@ task.delay(0.5, function()
     if not isScriptActive then
         return
     end
-    ShowNotification("Candy Farm", "Script loaded successfully. Ready to farm.", "success", 4)
+
+    ShowNotification("Candy Farm", "Script loaded successfully. Ready to hunt candy!", "success", 4)
 end)
