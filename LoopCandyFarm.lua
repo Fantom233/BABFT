@@ -18,14 +18,14 @@ local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 local Theme = {
-    NotifBg = Color3.fromRGB(32, 26, 42),
-    NotifBorder = Color3.fromRGB(58, 47, 78),
-    Text = Color3.fromRGB(240, 238, 245),
-    TextMuted = Color3.fromRGB(150, 145, 168),
-    SeparatorLine = Color3.fromRGB(55, 45, 72),
-    AccentPrimary = Color3.fromRGB(255, 125, 40),
-    AccentSuccess = Color3.fromRGB(90, 200, 110),
-    AccentDanger = Color3.fromRGB(230, 65, 65),
+    NotifBg = Color3.fromRGB(34, 20, 46),
+    NotifBorder = Color3.fromRGB(70, 45, 95),
+    Text = Color3.fromRGB(245, 240, 230),
+    TextMuted = Color3.fromRGB(170, 155, 185),
+    SeparatorLine = Color3.fromRGB(70, 45, 95),
+    AccentPrimary = Color3.fromRGB(255, 122, 30),
+    AccentSuccess = Color3.fromRGB(120, 200, 90),
+    AccentDanger = Color3.fromRGB(220, 50, 50),
 }
 
 local function Tween(instance, duration, goals, easingStyle, easingDirection)
@@ -66,33 +66,45 @@ local notificationCounter = 0
 local function ShowNotification(title, message, notificationType, duration)
     notificationCounter = notificationCounter + 1
     local currentOrder = notificationCounter
+
     local accentColor = Theme.AccentPrimary
+    local titleEmoji = "👻"
+
     if notificationType == "success" then
         accentColor = Theme.AccentSuccess
+        titleEmoji = "🎃"
     elseif notificationType == "error" then
         accentColor = Theme.AccentDanger
+        titleEmoji = "💀"
     end
 
-    local notificationFrame = Instance.new("Frame")
-    notificationFrame.Name = "Notification_" .. tostring(currentOrder)
-    notificationFrame.Size = UDim2.new(1, 0, 0, 76)
-    notificationFrame.Position = UDim2.new(1.5, 0, 0, 0)
-    notificationFrame.BackgroundColor3 = Theme.NotifBg
-    notificationFrame.BackgroundTransparency = 0.3
-    notificationFrame.BorderSizePixel = 0
-    notificationFrame.LayoutOrder = -currentOrder
-    notificationFrame.Parent = NotificationContainer
+    local holder = Instance.new("Frame")
+    holder.Name = "NotificationHolder_" .. tostring(currentOrder)
+    holder.Size = UDim2.new(1, 0, 0, 76)
+    holder.BackgroundTransparency = 1
+    holder.BorderSizePixel = 0
+    holder.LayoutOrder = -currentOrder
+    holder.Parent = NotificationContainer
 
-    local notificationCorner = Instance.new("UICorner")
-    notificationCorner.CornerRadius = UDim.new(0, 10)
-    notificationCorner.Parent = notificationFrame
+    local card = Instance.new("Frame")
+    card.Name = "Card"
+    card.Size = UDim2.new(1, 0, 1, 0)
+    card.Position = UDim2.new(1.5, 0, 0, 0)
+    card.BackgroundColor3 = Theme.NotifBg
+    card.BackgroundTransparency = 0.3
+    card.BorderSizePixel = 0
+    card.Parent = holder
 
-    local notificationStroke = Instance.new("UIStroke")
-    notificationStroke.Color = Theme.NotifBorder
-    notificationStroke.Thickness = 1
-    notificationStroke.Transparency = 0.3
-    notificationStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    notificationStroke.Parent = notificationFrame
+    local cardCorner = Instance.new("UICorner")
+    cardCorner.CornerRadius = UDim.new(0, 10)
+    cardCorner.Parent = card
+
+    local cardStroke = Instance.new("UIStroke")
+    cardStroke.Color = Theme.NotifBorder
+    cardStroke.Thickness = 1
+    cardStroke.Transparency = 0.3
+    cardStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    cardStroke.Parent = card
 
     local accentBar = Instance.new("Frame")
     accentBar.Name = "Accent"
@@ -100,7 +112,7 @@ local function ShowNotification(title, message, notificationType, duration)
     accentBar.Position = UDim2.new(0, 6, 0, 7)
     accentBar.BackgroundColor3 = accentColor
     accentBar.BorderSizePixel = 0
-    accentBar.Parent = notificationFrame
+    accentBar.Parent = card
 
     local accentBarCorner = Instance.new("UICorner")
     accentBarCorner.CornerRadius = UDim.new(0, 2)
@@ -115,8 +127,8 @@ local function ShowNotification(title, message, notificationType, duration)
     titleLabel.TextSize = 14
     titleLabel.TextColor3 = Theme.Text
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.Text = title
-    titleLabel.Parent = notificationFrame
+    titleLabel.Text = titleEmoji .. " " .. title
+    titleLabel.Parent = card
 
     local messageLabel = Instance.new("TextLabel")
     messageLabel.Name = "Message"
@@ -130,7 +142,7 @@ local function ShowNotification(title, message, notificationType, duration)
     messageLabel.TextYAlignment = Enum.TextYAlignment.Top
     messageLabel.TextWrapped = true
     messageLabel.Text = message
-    messageLabel.Parent = notificationFrame
+    messageLabel.Parent = card
 
     local progressTrack = Instance.new("Frame")
     progressTrack.Name = "ProgressTrack"
@@ -138,7 +150,7 @@ local function ShowNotification(title, message, notificationType, duration)
     progressTrack.Position = UDim2.new(0, 12, 1, -6)
     progressTrack.BackgroundColor3 = Theme.SeparatorLine
     progressTrack.BorderSizePixel = 0
-    progressTrack.Parent = notificationFrame
+    progressTrack.Parent = card
 
     local progressTrackCorner = Instance.new("UICorner")
     progressTrackCorner.CornerRadius = UDim.new(0, 1)
@@ -155,7 +167,7 @@ local function ShowNotification(title, message, notificationType, duration)
     progressBarCorner.CornerRadius = UDim.new(0, 1)
     progressBarCorner.Parent = progressBar
 
-    Tween(notificationFrame, 0.3, {
+    Tween(card, 0.3, {
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundTransparency = 0,
     }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -165,23 +177,42 @@ local function ShowNotification(title, message, notificationType, duration)
     }, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
 
     task.delay(duration, function()
-        if not notificationFrame or not notificationFrame.Parent then
+        if not holder or not holder.Parent then
             return
         end
-        Tween(notificationFrame, 0.25, {
+
+        Tween(card, 0.25, {
             Position = UDim2.new(1.5, 0, 0, 0),
             BackgroundTransparency = 0.3,
         }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-        for _, descendant in pairs(notificationFrame:GetDescendants()) do
-            if descendant:IsA("TextLabel") then
-                Tween(descendant, 0.2, {
-                    TextTransparency = 1,
-                })
-            end
-        end
+
+        Tween(accentBar, 0.2, {
+            BackgroundTransparency = 1,
+        })
+
+        Tween(cardStroke, 0.2, {
+            Transparency = 1,
+        })
+
+        Tween(titleLabel, 0.2, {
+            TextTransparency = 1,
+        })
+
+        Tween(messageLabel, 0.2, {
+            TextTransparency = 1,
+        })
+
+        Tween(progressTrack, 0.2, {
+            BackgroundTransparency = 1,
+        })
+
+        Tween(progressBar, 0.2, {
+            BackgroundTransparency = 1,
+        })
+
         task.delay(0.3, function()
-            if notificationFrame and notificationFrame.Parent then
-                notificationFrame:Destroy()
+            if holder and holder.Parent then
+                holder:Destroy()
             end
         end)
     end)
@@ -190,6 +221,13 @@ end
 local Houses = workspace:WaitForChild("Houses", 30)
 
 if not Houses then
+    getgenv().CANDY_LOOP_ACTIVE = false
+    ShowNotification(
+        "Candy Farm",
+        "There is no Halloween event running, or this server does not have the update.",
+        "error",
+        6
+    )
     return
 end
 
@@ -213,17 +251,22 @@ local candyDataNames = {
 
 local function getDataValue(dataName)
     local playerData = LocalPlayer:FindFirstChild("Data")
+
     if not playerData then
         return 0
     end
+
     local dataValue = playerData:FindFirstChild(dataName)
+
     if not dataValue then
         return 0
     end
+
     return dataValue.Value
 end
 
 local initialCandyValues = {}
+
 for _, candyInfo in ipairs(candyDataNames) do
     initialCandyValues[candyInfo.key] = getDataValue(candyInfo.dataName)
 end
@@ -235,6 +278,7 @@ local function forceDoorIntoPlayer(doorPart, walkSpeed)
     if forcedPartConnections[doorPart] then
         return
     end
+
     forcedPartConnections[doorPart] = RunService.Heartbeat:Connect(function()
         if not doorPart or not doorPart.Parent then
             if forcedPartConnections[doorPart] then
@@ -243,10 +287,16 @@ local function forceDoorIntoPlayer(doorPart, walkSpeed)
             end
             return
         end
+
+        if not currentHumanoid or not currentRootPart then
+            return
+        end
+
         doorPart.CFrame = currentRootPart.CFrame
         doorPart.Size = Vector3.new(10, 10, 10)
         doorPart.CanCollide = false
         doorPart.Transparency = 1
+
         if walkSpeed ~= 0 then
             currentHumanoid.WalkSpeed = walkSpeed
         end
@@ -254,8 +304,13 @@ local function forceDoorIntoPlayer(doorPart, walkSpeed)
 end
 
 local function performAutoFarm()
+    if not currentHumanoid or not currentRootPart then
+        return
+    end
+
     local savedWalkSpeed = currentHumanoid.WalkSpeed
     local allDescendants = Houses:GetDescendants()
+
     for _, descendant in ipairs(allDescendants) do
         if descendant.Name == "DoorInnerTouch" and descendant:IsA("BasePart") then
             if not descendant:GetAttribute("Forced") then
@@ -265,6 +320,7 @@ local function performAutoFarm()
             end
         end
     end
+
     for _, descendant in ipairs(allDescendants) do
         if descendant.Name == "GiantHand" then
             descendant:Destroy()
@@ -285,21 +341,24 @@ task.wait(0.2)
 
 if totalHousesClaimed ~= 0 then
     local timeoutSeconds = 10
-    local startTime = tick()
+    local startTime = os.clock()
+    local anyCandyChanged = false
+
     repeat
         task.wait()
-        local anyCandyChanged = false
+
         for _, candyInfo in ipairs(candyDataNames) do
             if getDataValue(candyInfo.dataName) ~= initialCandyValues[candyInfo.key] then
                 anyCandyChanged = true
                 break
             end
         end
-    until anyCandyChanged or (tick() - startTime) >= timeoutSeconds
-    if (tick() - startTime) >= timeoutSeconds then
+    until anyCandyChanged or (os.clock() - startTime) >= timeoutSeconds
+
+    if not anyCandyChanged then
         ShowNotification(
             "Candy Farm",
-            "Something went wrong. Attempting server hop anyway...",
+            "Candy was not collected in time. Server hopping anyway.",
             "error",
             4
         )
@@ -310,58 +369,138 @@ task.wait(2)
 
 ShowNotification("Candy Farm", "Server hopping...", "info", 4)
 
-local currentJobId = game.JobId
-local currentPlaceId = game.PlaceId
-
 local function getHttpRequest()
-    return request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request)
+    if request then
+        return request
+    end
+
+    if http_request then
+        return http_request
+    end
+
+    if syn and syn.request then
+        return syn.request
+    end
+
+    if http and http.request then
+        return http.request
+    end
+
+    if fluxus and fluxus.request then
+        return fluxus.request
+    end
+
+    return nil
 end
 
 local function getQueueOnTeleport()
-    return queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport) or queueonteleport
+    if queue_on_teleport then
+        return queue_on_teleport
+    end
+
+    if syn and syn.queue_on_teleport then
+        return syn.queue_on_teleport
+    end
+
+    if fluxus and fluxus.queue_on_teleport then
+        return fluxus.queue_on_teleport
+    end
+
+    if queueonteleport then
+        return queueonteleport
+    end
+
+    return nil
 end
 
 local function findAvailableServers()
     local httpRequest = getHttpRequest()
+
     if not httpRequest then
         return {}
     end
-    local response = httpRequest({
-        Url = string.format(
-            "https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true",
-            currentPlaceId
-        )
-    })
-    if not response or not response.Body then
+
+    local currentJobId = game.JobId
+    local currentPlaceId = game.PlaceId
+
+    local requestUrl = string.format(
+        "https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true",
+        currentPlaceId
+    )
+
+    local requestSucceeded, response = pcall(function()
+        return httpRequest({
+            Url = requestUrl,
+            Method = "GET",
+        })
+    end)
+
+    if not requestSucceeded or type(response) ~= "table" then
         return {}
     end
-    local body = HttpService:JSONDecode(response.Body)
-    if not body or not body.data then
+
+    if not response.Body then
         return {}
     end
+
+    local decodeSucceeded, decodedBody = pcall(function()
+        return HttpService:JSONDecode(response.Body)
+    end)
+
+    if not decodeSucceeded or type(decodedBody) ~= "table" then
+        return {}
+    end
+
+    if type(decodedBody.data) ~= "table" then
+        return {}
+    end
+
     local availableServers = {}
-    for _, serverInfo in next, body.data do
-        if type(serverInfo) ~= "table" then
-            continue
+
+    for _, serverInfo in ipairs(decodedBody.data) do
+        if type(serverInfo) == "table" then
+            local serverId = serverInfo.id
+            local playing = tonumber(serverInfo.playing)
+            local maxPlayers = tonumber(serverInfo.maxPlayers)
+
+            if serverId and playing and maxPlayers then
+                if playing < maxPlayers and serverId ~= currentJobId then
+                    table.insert(availableServers, serverId)
+                end
+            end
         end
-        local playing = tonumber(serverInfo.playing)
-        local maxPlayers = tonumber(serverInfo.maxPlayers)
-        if not playing or not maxPlayers then
-            continue
-        end
-        if playing >= maxPlayers then
-            continue
-        end
-        if serverInfo.id == currentJobId then
-            continue
-        end
-        table.insert(availableServers, 1, serverInfo.id)
     end
+
     return availableServers
 end
 
-local function serverHop()
+local isHopping = false
+local isRetryScheduled = false
+local attemptServerHop
+
+local function scheduleHopRetry(delaySeconds)
+    if isRetryScheduled then
+        return
+    end
+
+    isRetryScheduled = true
+
+    task.delay(delaySeconds, function()
+        isRetryScheduled = false
+        isHopping = false
+        attemptServerHop()
+    end)
+end
+
+attemptServerHop = function()
+    if isHopping then
+        return
+    end
+
+    isHopping = true
+
     local availableServers = findAvailableServers()
+
     if #availableServers == 0 then
         ShowNotification(
             "Candy Farm",
@@ -369,21 +508,22 @@ local function serverHop()
             "error",
             4
         )
-        task.wait(5)
-        serverHop()
+        scheduleHopRetry(5)
         return
     end
+
     local queueFunction = getQueueOnTeleport()
+
     if queueFunction then
         queueFunction("loadstring(game:HttpGet('https://raw.githubusercontent.com/Fantom233/BABFT/refs/heads/main/LoopCandyFarm.lua'))()")
     end
+
+    local chosenServer = availableServers[math.random(1, #availableServers)]
+
     local teleportSuccess = pcall(function()
-        TeleportService:TeleportToPlaceInstance(
-            currentPlaceId,
-            availableServers[math.random(1, #availableServers)],
-            LocalPlayer
-        )
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, chosenServer, LocalPlayer)
     end)
+
     if not teleportSuccess then
         ShowNotification(
             "Candy Farm",
@@ -391,23 +531,22 @@ local function serverHop()
             "error",
             4
         )
-        task.wait(5)
-        serverHop()
+        scheduleHopRetry(5)
     end
 end
 
-TeleportService.TeleportInitFailed:Connect(function(failedPlayer, errorMessage)
+TeleportService.TeleportInitFailed:Connect(function(failedPlayer, teleportResult, errorMessage)
     if failedPlayer ~= LocalPlayer then
         return
     end
+
     ShowNotification(
         "Candy Farm",
         "Server full or unavailable. Retrying in 5 seconds...",
         "error",
         4
     )
-    task.wait(5)
-    serverHop()
+    scheduleHopRetry(5)
 end)
 
-serverHop()
+attemptServerHop()
