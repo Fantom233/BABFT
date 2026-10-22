@@ -1,1199 +1,775 @@
-if not game:IsLoaded() then
-    game.Loaded:Wait()
-end
+if not game:IsLoaded() then game.Loaded:Wait() end
 
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local VirtualUser = game:GetService("VirtualUser")
-local StarterGui = game:GetService("StarterGui")
+local TweenService = game:GetService("TweenService")
+local GuiService = game:GetService("GuiService")
+local TeleportService = game:GetService("TeleportService")
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
+local gs = getgenv and getgenv() or _G
+if gs.CandyFarmUnload then gs.CandyFarmUnload() end
+
 local Theme = {
-    WindowBg = Color3.fromRGB(18, 12, 24),
-    TitleBarBg = Color3.fromRGB(34, 20, 46),
-    ContentBg = Color3.fromRGB(18, 12, 24),
-    TabActiveBg = Color3.fromRGB(255, 122, 30),
-    TabInactiveBg = Color3.fromRGB(50, 35, 65),
-    TabHoverBg = Color3.fromRGB(80, 55, 105),
-    TabTextActive = Color3.fromRGB(255, 250, 240),
-    TabTextInactive = Color3.fromRGB(170, 155, 185),
-    Text = Color3.fromRGB(245, 240, 230),
-    TextMuted = Color3.fromRGB(170, 155, 185),
-    SeparatorLine = Color3.fromRGB(70, 45, 95),
-    ButtonPrimary = Color3.fromRGB(255, 122, 30),
-    ButtonDanger = Color3.fromRGB(220, 50, 50),
-    ButtonSuccess = Color3.fromRGB(120, 200, 90),
-    ButtonNeutral = Color3.fromRGB(80, 55, 105),
-    CheckOn = Color3.fromRGB(255, 122, 30),
-    CheckOff = Color3.fromRGB(50, 35, 65),
-    CheckBorder = Color3.fromRGB(90, 65, 120),
-    Border = Color3.fromRGB(70, 45, 95),
-    ScrollThumb = Color3.fromRGB(255, 122, 30),
-    NotifBg = Color3.fromRGB(34, 20, 46),
-    NotifBorder = Color3.fromRGB(70, 45, 95),
+    Bg = Color3.fromRGB(16, 12, 20),
+    Surface = Color3.fromRGB(26, 20, 32),
+    SurfaceAlt = Color3.fromRGB(36, 28, 46),
+    Accent = Color3.fromRGB(255, 125, 45),
+    AccentSoft = Color3.fromRGB(255, 165, 90),
+    AccentDark = Color3.fromRGB(180, 80, 25),
+    Text = Color3.fromRGB(248, 242, 238),
+    TextDim = Color3.fromRGB(155, 145, 165),
+    TextMuted = Color3.fromRGB(105, 95, 115),
+    Border = Color3.fromRGB(50, 40, 62),
+    BorderLight = Color3.fromRGB(75, 60, 88),
+    Success = Color3.fromRGB(95, 215, 125),
+    Danger = Color3.fromRGB(235, 80, 80),
+    Track = Color3.fromRGB(60, 50, 72),
 }
 
-local function Tween(instance, duration, goals, easingStyle, easingDirection)
-    local tweenInfo = TweenInfo.new(
-        duration,
-        easingStyle or Enum.EasingStyle.Quad,
-        easingDirection or Enum.EasingDirection.Out
-    )
-    local tween = TweenService:Create(instance, tweenInfo, goals)
-    tween:Play()
-    return tween
-end
-
-local NotificationGui = Instance.new("ScreenGui")
-NotificationGui.Name = "CandyFarmNotifications"
-NotificationGui.ResetOnSpawn = false
-NotificationGui.IgnoreGuiInset = true
-NotificationGui.DisplayOrder = 999
-NotificationGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-NotificationGui.Parent = PlayerGui
-
-local NotificationContainer = Instance.new("Frame")
-NotificationContainer.Name = "Container"
-NotificationContainer.Size = UDim2.new(0, 340, 1, -20)
-NotificationContainer.Position = UDim2.new(1, -355, 0, 10)
-NotificationContainer.BackgroundTransparency = 1
-NotificationContainer.Parent = NotificationGui
-
-local NotificationLayout = Instance.new("UIListLayout")
-NotificationLayout.Padding = UDim.new(0, 8)
-NotificationLayout.SortOrder = Enum.SortOrder.LayoutOrder
-NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-NotificationLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-NotificationLayout.Parent = NotificationContainer
-
-local notificationCounter = 0
-
-local function ShowNotification(title, message, notificationType, duration)
-    notificationCounter = notificationCounter + 1
-    local currentOrder = notificationCounter
-
-    local accentColor = Theme.ButtonPrimary
-    local titleEmoji = "👻"
-
-    if notificationType == "success" then
-        accentColor = Theme.ButtonSuccess
-        titleEmoji = "🎃"
-    elseif notificationType == "error" then
-        accentColor = Theme.ButtonDanger
-        titleEmoji = "💀"
-    end
-
-    local holder = Instance.new("Frame")
-    holder.Name = "NotificationHolder_" .. tostring(currentOrder)
-    holder.Size = UDim2.new(1, 0, 0, 76)
-    holder.BackgroundTransparency = 1
-    holder.BorderSizePixel = 0
-    holder.LayoutOrder = -currentOrder
-    holder.Parent = NotificationContainer
-
-    local card = Instance.new("Frame")
-    card.Name = "Card"
-    card.Size = UDim2.new(1, 0, 1, 0)
-    card.Position = UDim2.new(1.5, 0, 0, 0)
-    card.BackgroundColor3 = Theme.NotifBg
-    card.BackgroundTransparency = 0.3
-    card.BorderSizePixel = 0
-    card.Parent = holder
-
-    local cardCorner = Instance.new("UICorner")
-    cardCorner.CornerRadius = UDim.new(0, 10)
-    cardCorner.Parent = card
-
-    local cardStroke = Instance.new("UIStroke")
-    cardStroke.Color = Theme.NotifBorder
-    cardStroke.Thickness = 1
-    cardStroke.Transparency = 0.3
-    cardStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    cardStroke.Parent = card
-
-    local accentBar = Instance.new("Frame")
-    accentBar.Name = "Accent"
-    accentBar.Size = UDim2.new(0, 4, 1, -14)
-    accentBar.Position = UDim2.new(0, 6, 0, 7)
-    accentBar.BackgroundColor3 = accentColor
-    accentBar.BorderSizePixel = 0
-    accentBar.Parent = card
-
-    local accentBarCorner = Instance.new("UICorner")
-    accentBarCorner.CornerRadius = UDim.new(0, 2)
-    accentBarCorner.Parent = accentBar
-
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.Name = "Title"
-    titleLabel.Size = UDim2.new(1, -30, 0, 22)
-    titleLabel.Position = UDim2.new(0, 18, 0, 10)
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextSize = 14
-    titleLabel.TextColor3 = Theme.Text
-    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.Text = titleEmoji .. " " .. title
-    titleLabel.Parent = card
-
-    local messageLabel = Instance.new("TextLabel")
-    messageLabel.Name = "Message"
-    messageLabel.Size = UDim2.new(1, -30, 1, -46)
-    messageLabel.Position = UDim2.new(0, 18, 0, 34)
-    messageLabel.BackgroundTransparency = 1
-    messageLabel.Font = Enum.Font.GothamMedium
-    messageLabel.TextSize = 12
-    messageLabel.TextColor3 = Theme.TextMuted
-    messageLabel.TextXAlignment = Enum.TextXAlignment.Left
-    messageLabel.TextYAlignment = Enum.TextYAlignment.Top
-    messageLabel.TextWrapped = true
-    messageLabel.Text = message
-    messageLabel.Parent = card
-
-    local progressTrack = Instance.new("Frame")
-    progressTrack.Name = "ProgressTrack"
-    progressTrack.Size = UDim2.new(1, -24, 0, 2)
-    progressTrack.Position = UDim2.new(0, 12, 1, -6)
-    progressTrack.BackgroundColor3 = Theme.SeparatorLine
-    progressTrack.BorderSizePixel = 0
-    progressTrack.Parent = card
-
-    local progressTrackCorner = Instance.new("UICorner")
-    progressTrackCorner.CornerRadius = UDim.new(0, 1)
-    progressTrackCorner.Parent = progressTrack
-
-    local progressBar = Instance.new("Frame")
-    progressBar.Name = "ProgressBar"
-    progressBar.Size = UDim2.new(1, 0, 1, 0)
-    progressBar.BackgroundColor3 = accentColor
-    progressBar.BorderSizePixel = 0
-    progressBar.Parent = progressTrack
-
-    local progressBarCorner = Instance.new("UICorner")
-    progressBarCorner.CornerRadius = UDim.new(0, 1)
-    progressBarCorner.Parent = progressBar
-
-    Tween(card, 0.3, {
-        Position = UDim2.new(0, 0, 0, 0),
-        BackgroundTransparency = 0,
-    }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-
-    Tween(progressBar, duration, {
-        Size = UDim2.new(0, 0, 1, 0),
-    }, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
-
-    task.delay(duration, function()
-        if not holder or not holder.Parent then
-            return
-        end
-
-        Tween(card, 0.25, {
-            Position = UDim2.new(1.5, 0, 0, 0),
-            BackgroundTransparency = 0.3,
-        }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-
-        Tween(accentBar, 0.2, {
-            BackgroundTransparency = 1,
-        })
-
-        Tween(cardStroke, 0.2, {
-            Transparency = 1,
-        })
-
-        Tween(titleLabel, 0.2, {
-            TextTransparency = 1,
-        })
-
-        Tween(messageLabel, 0.2, {
-            TextTransparency = 1,
-        })
-
-        Tween(progressTrack, 0.2, {
-            BackgroundTransparency = 1,
-        })
-
-        Tween(progressBar, 0.2, {
-            BackgroundTransparency = 1,
-        })
-
-        task.delay(0.3, function()
-            if holder and holder.Parent then
-                holder:Destroy()
-            end
-        end)
-    end)
-end
-
-local Houses = workspace:FindFirstChild("Houses")
-
-if not Houses then
-    ShowNotification(
-        "Candy Farm",
-        "There is no Halloween event running, or this server does not have the update.",
-        "error",
-        6
-    )
-    return
-end
-
-local candyDataNames = {
-    { key = "blue", dataName = "CandyBlue", label = "Blue Candy" },
-    { key = "yellow", dataName = "CandyOrange", label = "Yellow Candy" },
-    { key = "purple", dataName = "CandyPurple", label = "Purple Candy" },
-    { key = "pink", dataName = "CandyPink", label = "Pink Candy" },
-    { key = "red", dataName = "CandyRed", label = "Red Candy" },
+local Candy = {
+    { DataName = "CandyOrange", Icon = "rbxassetid://7781288646" },
+    { DataName = "CandyPurple", Icon = "rbxassetid://7781287748" },
+    { DataName = "CandyBlue", Icon = "rbxassetid://7781285156" },
+    { DataName = "CandyPink", Icon = "rbxassetid://7781284023" },
+    { DataName = "CandyRed", Icon = "rbxassetid://7781250539" },
 }
 
-local function getDataValue(dataName)
-    local playerData = LocalPlayer:FindFirstChild("Data")
+local config = { AntiAfk = true, HidePopups = true }
+local Runtime = { Farming = false, Root = nil, Claimed = {}, Reconnecting = false, Running = true }
+local Session = { Candy = {}, Houses = 0, Mark = nil }
 
-    if not playerData then
-        return 0
-    end
+local hiddenPopup = nil
+local RefreshUI
 
-    local dataValue = playerData:FindFirstChild(dataName)
-
-    if not dataValue then
-        return 0
-    end
-
-    return dataValue.Value
-end
-
-local initialCandyValues = {}
-
-for _, candyInfo in ipairs(candyDataNames) do
-    initialCandyValues[candyInfo.key] = getDataValue(candyInfo.dataName)
-end
-
-local currentCharacter = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local currentHumanoid = currentCharacter:WaitForChild("Humanoid")
-local currentRootPart = currentCharacter:WaitForChild("HumanoidRootPart")
-
-LocalPlayer.CharacterAdded:Connect(function(newCharacter)
-    currentCharacter = newCharacter
-    currentHumanoid = newCharacter:WaitForChild("Humanoid")
-    currentRootPart = newCharacter:WaitForChild("HumanoidRootPart")
+task.spawn(function()
+    local itemGained = PlayerGui:WaitForChild("ItemGained")
+    local display = itemGained:WaitForChild("DisplayGainedItem")
+    hiddenPopup = display:WaitForChild("LocalScript")
 end)
 
-local isScriptActive = true
-local isFarming = false
-local isHidingPopups = true
-local isAntiAfkEnabled = true
-local hasAutoFarmStarted = false
-local isClosing = false
-local antiAfkConnection = nil
-local housesAddedConnection = nil
-local forcedPartConnections = {}
-local totalHousesClaimed = 0
-local elapsedSeconds = 0
-
-local function updateAntiAfk()
-    if isAntiAfkEnabled then
-        if not antiAfkConnection then
-            antiAfkConnection = LocalPlayer.Idled:Connect(function()
-                if isAntiAfkEnabled then
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
+task.spawn(function()
+    local dataFolder = LocalPlayer:WaitForChild("Data")
+    local before = {}
+    for _, candy in ipairs(Candy) do
+        local v = dataFolder:FindFirstChild(candy.DataName)
+        if v then
+            before[candy.DataName] = v.Value
+            v:GetPropertyChangedSignal("Value"):Connect(function()
+                local delta = v.Value - before[candy.DataName]
+                if delta > 0 then
+                    Session.Candy[candy.DataName] = (Session.Candy[candy.DataName] or 0) + delta
+                    if RefreshUI then RefreshUI() end
                 end
+                before[candy.DataName] = v.Value
             end)
         end
-    else
-        if antiAfkConnection then
-            antiAfkConnection:Disconnect()
-            antiAfkConnection = nil
-        end
     end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    Runtime.Root = char:WaitForChild("HumanoidRootPart")
+end)
+if LocalPlayer.Character then
+    Runtime.Root = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
 end
 
-local function setItemGainedScriptEnabled(isEnabled)
-    local itemGainedGui = PlayerGui:FindFirstChild("ItemGained")
-
-    if not itemGainedGui then
-        return
+LocalPlayer.Idled:Connect(function()
+    if config.AntiAfk then
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
     end
+end)
 
-    local displayGainedItem = itemGainedGui:FindFirstChild("DisplayGainedItem")
+GuiService.ErrorMessageChanged:Connect(function()
+    local msg = GuiService:GetErrorMessage()
+    local lower = string.lower(msg)
+    if lower:find("disconnectclientinitiated", 1, true) then return end
+    if not (lower:find("267", 1, true) or lower:find("disconnect", 1, true)
+        or lower:find("connection", 1, true) or lower:find("network", 1, true)) then return end
+    if Runtime.Reconnecting then return end
+    Runtime.Reconnecting = true
+    Runtime.Farming = false
 
-    if not displayGainedItem then
-        return
-    end
+    queue_on_teleport("if not game:IsLoaded() then game.Loaded:Wait() end getgenv().CandyFarmFromHop = true loadstring(game:HttpGet('https://raw.githubusercontent.com/Fantom233/BABFT/refs/heads/main/CandyFarm.lua'))()")
 
-    local itemLocalScript = displayGainedItem:FindFirstChild("LocalScript")
-
-    if not itemLocalScript then
-        return
-    end
-
-    itemLocalScript.Disabled = not isEnabled
-end
-
-local function forceDoorIntoPlayer(doorPart, walkSpeed)
-    if forcedPartConnections[doorPart] then
-        return
-    end
-
-    forcedPartConnections[doorPart] = RunService.Heartbeat:Connect(function()
-        if not isFarming or not doorPart or not doorPart.Parent then
-            if forcedPartConnections[doorPart] then
-                forcedPartConnections[doorPart]:Disconnect()
-                forcedPartConnections[doorPart] = nil
-            end
-            return
-        end
-
-        if not currentHumanoid or not currentRootPart then
-            return
-        end
-
-        doorPart.CFrame = currentRootPart.CFrame
-        doorPart.Size = Vector3.new(10, 10, 10)
-        doorPart.CanCollide = false
-        doorPart.Transparency = 1
-
-        if walkSpeed ~= 0 then
-            currentHumanoid.WalkSpeed = walkSpeed
+    task.spawn(function()
+        while Runtime.Reconnecting do
+            TeleportService:Teleport(537413528, LocalPlayer)
+            task.wait(5)
         end
     end)
+end)
+
+local function HidePopup()
+    if not hiddenPopup then return end
+    hiddenPopup.Disabled = config.HidePopups
+    if config.HidePopups then
+        for _, child in ipairs(hiddenPopup.Parent:GetChildren()) do
+            if child:IsA("ScreenGui") then child.Enabled = false end
+        end
+    end
 end
 
-local function performAutoFarm()
-    if not currentHumanoid or not currentRootPart then
-        return
+local function ClaimAll()
+    local root = Runtime.Root
+    local houses = workspace.Houses
+    local count = 0
+
+    for _, house in ipairs(houses:GetChildren()) do
+        if not Runtime.Claimed[house] then
+            local door = house:FindFirstChild("DoorInnerTouch", true)
+            if door then
+                door.CFrame = root.CFrame
+                door.CanCollide = false
+                door.Transparency = 1
+                firetouchinterest(root, door, 0)
+                firetouchinterest(root, door, 1)
+                Runtime.Claimed[house] = true
+                count = count + 1
+            end
+            local hand = house:FindFirstChild("GiantHand")
+            if hand then hand:Destroy() end
+        end
     end
 
-    local savedWalkSpeed = currentHumanoid.WalkSpeed
-    local allDescendants = Houses:GetDescendants()
+    if count > 0 then
+        Session.Houses = Session.Houses + count
+        HidePopup()
+        if RefreshUI then RefreshUI() end
+    end
 
-    for _, descendant in ipairs(allDescendants) do
-        if descendant.Name == "DoorInnerTouch" and descendant:IsA("BasePart") then
-            if not descendant:GetAttribute("Forced") then
-                totalHousesClaimed = totalHousesClaimed + 1
-                forceDoorIntoPlayer(descendant, savedWalkSpeed)
-                descendant:SetAttribute("Forced", true)
+    return count
+end
+
+local function StartFarm()
+    if Runtime.Farming then return end
+    Runtime.Farming = true
+    Session.Mark = Session.Mark or os.time()
+    Runtime.Claimed = {}
+
+    task.spawn(function()
+        while Runtime.Running and Runtime.Farming do
+            local claimed = ClaimAll()
+            if claimed == 0 then
+                task.wait(0.15)
             end
         end
-    end
+    end)
 
-    for _, descendant in ipairs(allDescendants) do
-        if descendant.Name == "GiantHand" then
-            descendant:Destroy()
-        end
-    end
+    if RefreshUI then RefreshUI() end
 end
 
-local camera = workspace.CurrentCamera
-
-while not camera do
-    task.wait()
-    camera = workspace.CurrentCamera
+local function StopFarm()
+    Runtime.Farming = false
+    if RefreshUI then RefreshUI() end
 end
 
-local viewportSize = camera.ViewportSize
-local windowWidth = math.floor(viewportSize.X / 8)
-local windowHeight = math.floor(viewportSize.Y / 2)
+local function New(class, props, children)
+    local inst = Instance.new(class)
+    for k, v in pairs(props) do inst[k] = v end
+    for _, child in ipairs(children or {}) do child.Parent = inst end
+    return inst
+end
 
-local MainGui = Instance.new("ScreenGui")
-MainGui.Name = "CandyFarmGUI"
-MainGui.ResetOnSpawn = false
-MainGui.IgnoreGuiInset = true
-MainGui.DisplayOrder = 100
-MainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-MainGui.Parent = PlayerGui
+local viewport = workspace.CurrentCamera.ViewportSize
+local width = math.clamp(math.floor(viewport.X / 8), 320, 380)
 
-local Window = Instance.new("Frame")
-Window.Name = "Window"
-Window.Size = UDim2.fromOffset(windowWidth, windowHeight)
-Window.BackgroundColor3 = Theme.WindowBg
-Window.BorderSizePixel = 0
-Window.Active = true
-Window.Parent = MainGui
+local screen = New("ScreenGui", {
+    Name = "CandyFarm2026",
+    ResetOnSpawn = false,
+    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+    DisplayOrder = 100,
+    IgnoreGuiInset = false,
+    Parent = PlayerGui,
+})
 
-local WindowCorner = Instance.new("UICorner")
-WindowCorner.CornerRadius = UDim.new(0, 12)
-WindowCorner.Parent = Window
+local main = New("Frame", {
+    Size = UDim2.fromOffset(width, 0),
+    AutomaticSize = Enum.AutomaticSize.Y,
+    BackgroundColor3 = Theme.Bg,
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Parent = screen,
+}, {
+    New("UICorner", { CornerRadius = UDim.new(0, 16) }),
+    New("UIStroke", { Color = Theme.Border, Thickness = 1, Transparency = 0.3 }),
+    New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }),
+    New("UIGradient", {
+        Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, Theme.Bg),
+            ColorSequenceKeypoint.new(1, Theme.Surface),
+        },
+        Rotation = 90,
+    }),
+})
 
-local WindowStroke = Instance.new("UIStroke")
-WindowStroke.Color = Theme.Border
-WindowStroke.Thickness = 1
-WindowStroke.Transparency = 0.3
-WindowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-WindowStroke.Parent = Window
+local scale = New("UIScale", { Parent = main })
 
-Window.Position = UDim2.fromOffset(
-    math.floor((viewportSize.X - windowWidth) / 2),
-    math.floor((viewportSize.Y - windowHeight) / 2)
-)
+local header = New("Frame", {
+    Size = UDim2.new(1, 0, 0, 58),
+    BackgroundColor3 = Theme.Surface,
+    BorderSizePixel = 0,
+    LayoutOrder = 1,
+    Parent = main,
+}, {
+    New("UICorner", { CornerRadius = UDim.new(0, 16) }),
+})
 
-local TitleBar = Instance.new("Frame")
-TitleBar.Name = "TitleBar"
-TitleBar.Size = UDim2.new(1, 0, 0, 50)
-TitleBar.BackgroundColor3 = Theme.TitleBarBg
-TitleBar.BorderSizePixel = 0
-TitleBar.Parent = Window
+New("Frame", {
+    Size = UDim2.new(1, 0, 0, 16),
+    Position = UDim2.new(0, 0, 1, -16),
+    BackgroundColor3 = Theme.Surface,
+    BorderSizePixel = 0,
+    Parent = header,
+})
 
-local TitleBarCorner = Instance.new("UICorner")
-TitleBarCorner.CornerRadius = UDim.new(0, 12)
-TitleBarCorner.Parent = TitleBar
+New("UIGradient", {
+    Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Theme.Accent),
+        ColorSequenceKeypoint.new(1, Theme.AccentDark),
+    },
+    Rotation = 90,
+    Transparency = NumberSequence.new{
+        NumberSequenceKeypoint.new(0, 0.82),
+        NumberSequenceKeypoint.new(1, 0.95),
+    },
+    Parent = header,
+})
 
-local AccentStripe = Instance.new("Frame")
-AccentStripe.Name = "AccentStripe"
-AccentStripe.Size = UDim2.new(1, -32, 0, 3)
-AccentStripe.Position = UDim2.new(0, 16, 1, -1)
-AccentStripe.BackgroundColor3 = Theme.ButtonPrimary
-AccentStripe.BorderSizePixel = 0
-AccentStripe.Parent = TitleBar
+New("Frame", {
+    Size = UDim2.new(0, 3, 0, 24),
+    Position = UDim2.fromOffset(16, 17),
+    BackgroundColor3 = Theme.Accent,
+    BorderSizePixel = 0,
+    Parent = header,
+}, {
+    New("UICorner", { CornerRadius = UDim.new(1, 0) }),
+})
 
-local AccentStripeCorner = Instance.new("UICorner")
-AccentStripeCorner.CornerRadius = UDim.new(0, 2)
-AccentStripeCorner.Parent = AccentStripe
+New("TextLabel", {
+    Text = "Candy Farm",
+    Font = Enum.Font.GothamBold,
+    TextSize = 16,
+    TextColor3 = Theme.Text,
+    BackgroundTransparency = 1,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Size = UDim2.new(1, -120, 0, 20),
+    Position = UDim2.fromOffset(28, 14),
+    Parent = header,
+})
 
-local TitleText = Instance.new("TextLabel")
-TitleText.Name = "Title"
-TitleText.Size = UDim2.new(1, -80, 0, 24)
-TitleText.Position = UDim2.new(0, 20, 0, 8)
-TitleText.BackgroundTransparency = 1
-TitleText.Font = Enum.Font.GothamBold
-TitleText.TextSize = 16
-TitleText.TextColor3 = Theme.Text
-TitleText.TextXAlignment = Enum.TextXAlignment.Left
-TitleText.Text = "🎃 Candy Farm"
-TitleText.Parent = TitleBar
+local statusPill = New("Frame", {
+    AnchorPoint = Vector2.new(0, 0.5),
+    Position = UDim2.new(0, 28, 0, 40),
+    Size = UDim2.fromOffset(0, 16),
+    AutomaticSize = Enum.AutomaticSize.X,
+    BackgroundTransparency = 1,
+    Parent = header,
+}, {
+    New("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 6),
+    }),
+})
 
-local SubtitleText = Instance.new("TextLabel")
-SubtitleText.Name = "Subtitle"
-SubtitleText.Size = UDim2.new(1, -80, 0, 14)
-SubtitleText.Position = UDim2.new(0, 20, 0, 28)
-SubtitleText.BackgroundTransparency = 1
-SubtitleText.Font = Enum.Font.GothamMedium
-SubtitleText.TextSize = 9
-SubtitleText.TextColor3 = Theme.TextMuted
-SubtitleText.TextXAlignment = Enum.TextXAlignment.Left
-SubtitleText.Text = "👻 Halloween 2025 Edition 👻"
-SubtitleText.Parent = TitleBar
+local statusDot = New("Frame", {
+    Size = UDim2.fromOffset(7, 7),
+    BackgroundColor3 = Theme.TextMuted,
+    BorderSizePixel = 0,
+    LayoutOrder = 1,
+    Parent = statusPill,
+}, {
+    New("UICorner", { CornerRadius = UDim.new(1, 0) }),
+})
 
-local CloseButton = Instance.new("TextButton")
-CloseButton.Name = "CloseButton"
-CloseButton.Size = UDim2.fromOffset(30, 30)
-CloseButton.Position = UDim2.new(1, -40, 0, 10)
-CloseButton.BackgroundColor3 = Theme.ButtonDanger
-CloseButton.BorderSizePixel = 0
-CloseButton.Text = "✕"
-CloseButton.Font = Enum.Font.GothamBold
-CloseButton.TextSize = 14
-CloseButton.TextColor3 = Theme.Text
-CloseButton.AutoButtonColor = false
-CloseButton.Parent = TitleBar
+local statusText = New("TextLabel", {
+    Text = "idle",
+    Font = Enum.Font.GothamMedium,
+    TextSize = 11,
+    TextColor3 = Theme.TextDim,
+    BackgroundTransparency = 1,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    LayoutOrder = 2,
+    AutomaticSize = Enum.AutomaticSize.X,
+    Size = UDim2.fromOffset(0, 16),
+    Parent = statusPill,
+})
 
-local CloseButtonCorner = Instance.new("UICorner")
-CloseButtonCorner.CornerRadius = UDim.new(0, 6)
-CloseButtonCorner.Parent = CloseButton
-
-CloseButton.MouseEnter:Connect(function()
-    Tween(CloseButton, 0.15, {
-        BackgroundColor3 = Color3.fromRGB(250, 85, 85),
+local function IconButton(x)
+    return New("TextButton", {
+        Text = "",
+        Size = UDim2.fromOffset(28, 28),
+        Position = UDim2.new(1, x, 0, 15),
+        BackgroundColor3 = Theme.SurfaceAlt,
+        BorderSizePixel = 0,
+        AutoButtonColor = false,
+        Parent = header,
+    }, {
+        New("UICorner", { CornerRadius = UDim.new(0, 8) }),
     })
-end)
+end
 
-CloseButton.MouseLeave:Connect(function()
-    Tween(CloseButton, 0.15, {
-        BackgroundColor3 = Theme.ButtonDanger,
+local minBtn = IconButton(-66)
+New("Frame", {
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.fromScale(0.5, 0.5),
+    Size = UDim2.fromOffset(10, 2),
+    BackgroundColor3 = Theme.TextDim,
+    BorderSizePixel = 0,
+    Parent = minBtn,
+}, { New("UICorner", { CornerRadius = UDim.new(1, 0) }) })
+
+local closeBtn = IconButton(-34)
+New("Frame", {
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.fromScale(0.5, 0.5),
+    Size = UDim2.fromOffset(11, 2),
+    Rotation = 45,
+    BackgroundColor3 = Theme.TextDim,
+    BorderSizePixel = 0,
+    Parent = closeBtn,
+}, { New("UICorner", { CornerRadius = UDim.new(1, 0) }) })
+New("Frame", {
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.fromScale(0.5, 0.5),
+    Size = UDim2.fromOffset(11, 2),
+    Rotation = -45,
+    BackgroundColor3 = Theme.TextDim,
+    BorderSizePixel = 0,
+    Parent = closeBtn,
+}, { New("UICorner", { CornerRadius = UDim.new(1, 0) }) })
+
+local body = New("Frame", {
+    Size = UDim2.new(1, 0, 0, 0),
+    AutomaticSize = Enum.AutomaticSize.Y,
+    BackgroundTransparency = 1,
+    LayoutOrder = 2,
+    Parent = main,
+}, {
+    New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10) }),
+    New("UIPadding", {
+        PaddingTop = UDim.new(0, 10),
+        PaddingBottom = UDim.new(0, 14),
+        PaddingLeft = UDim.new(0, 14),
+        PaddingRight = UDim.new(0, 14),
+    }),
+})
+
+local candyRow = New("Frame", {
+    Size = UDim2.new(1, 0, 0, 60),
+    BackgroundColor3 = Theme.Surface,
+    BorderSizePixel = 0,
+    LayoutOrder = 1,
+    Parent = body,
+}, {
+    New("UICorner", { CornerRadius = UDim.new(0, 12) }),
+    New("UIStroke", { Color = Theme.Border, Thickness = 1, Transparency = 0.4 }),
+    New("UIPadding", {
+        PaddingLeft = UDim.new(0, 10),
+        PaddingRight = UDim.new(0, 10),
+        PaddingTop = UDim.new(0, 10),
+        PaddingBottom = UDim.new(0, 10),
+    }),
+})
+
+local candyLayout = New("UIListLayout", {
+    FillDirection = Enum.FillDirection.Horizontal,
+    VerticalAlignment = Enum.VerticalAlignment.Center,
+    HorizontalAlignment = Enum.HorizontalAlignment.Center,
+    HorizontalFlex = Enum.UIFlexAlignment.SpaceEvenly,
+    Parent = candyRow,
+})
+
+local candyRefs = {}
+for index, candy in ipairs(Candy) do
+    local cell = New("Frame", {
+        Size = UDim2.fromOffset(0, 40),
+        AutomaticSize = Enum.AutomaticSize.X,
+        BackgroundTransparency = 1,
+        LayoutOrder = index,
+        Parent = candyRow,
+    }, {
+        New("UIListLayout", {
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            HorizontalAlignment = Enum.HorizontalAlignment.Center,
+            Padding = UDim.new(0, 3),
+        }),
     })
-end)
+    New("ImageLabel", {
+        Image = candy.Icon,
+        BackgroundTransparency = 1,
+        Size = UDim2.fromOffset(24, 24),
+        ScaleType = Enum.ScaleType.Fit,
+        LayoutOrder = 1,
+        Parent = cell,
+    })
+    candyRefs[candy.DataName] = New("TextLabel", {
+        Text = "0",
+        Font = Enum.Font.GothamBold,
+        TextSize = 14,
+        TextColor3 = Theme.Text,
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        Size = UDim2.fromOffset(28, 16),
+        LayoutOrder = 2,
+        Parent = cell,
+    })
+end
 
-local isDragging = false
-local dragStartMouse = nil
-local dragStartPosition = nil
+local statsCard = New("Frame", {
+    Size = UDim2.new(1, 0, 0, 0),
+    AutomaticSize = Enum.AutomaticSize.Y,
+    BackgroundColor3 = Theme.Surface,
+    BorderSizePixel = 0,
+    LayoutOrder = 2,
+    Parent = body,
+}, {
+    New("UICorner", { CornerRadius = UDim.new(0, 12) }),
+    New("UIStroke", { Color = Theme.Border, Thickness = 1, Transparency = 0.4 }),
+    New("UIPadding", {
+        PaddingTop = UDim.new(0, 10),
+        PaddingBottom = UDim.new(0, 10),
+        PaddingLeft = UDim.new(0, 14),
+        PaddingRight = UDim.new(0, 14),
+    }),
+    New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8) }),
+})
 
-TitleBar.InputBegan:Connect(function(input)
-    if input.Target == CloseButton then
-        return
+local function StatRow(order)
+    return New("Frame", {
+        Size = UDim2.new(1, 0, 0, 16),
+        BackgroundTransparency = 1,
+        LayoutOrder = order,
+        Parent = statsCard,
+    }, {
+        New("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            VerticalAlignment = Enum.VerticalAlignment.Center,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+        }),
+    })
+end
+
+local function StatKey(text, parent)
+    New("TextLabel", {
+        Text = text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 10,
+        TextColor3 = Theme.TextMuted,
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Size = UDim2.fromOffset(64, 16),
+        Parent = parent,
+    })
+end
+
+local timeRow = StatRow(1)
+StatKey("TIME", timeRow)
+local timeVal = New("TextLabel", {
+    Text = "00:00:00",
+    Font = Enum.Font.GothamBold,
+    TextSize = 13,
+    TextColor3 = Theme.Text,
+    BackgroundTransparency = 1,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Size = UDim2.new(1, -70, 0, 16),
+    Parent = timeRow,
+})
+
+local housesRow = StatRow(2)
+StatKey("HOUSES", housesRow)
+local housesVal = New("TextLabel", {
+    Text = "0",
+    Font = Enum.Font.GothamBold,
+    TextSize = 13,
+    TextColor3 = Theme.Text,
+    BackgroundTransparency = 1,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Size = UDim2.new(1, -70, 0, 16),
+    Parent = housesRow,
+})
+
+local totalRow = StatRow(3)
+StatKey("TOTAL", totalRow)
+local totalVal = New("TextLabel", {
+    Text = "0 candy",
+    Font = Enum.Font.GothamBold,
+    TextSize = 13,
+    TextColor3 = Theme.Accent,
+    BackgroundTransparency = 1,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Size = UDim2.new(1, -70, 0, 16),
+    Parent = totalRow,
+})
+
+local togglesCard = New("Frame", {
+    Size = UDim2.new(1, 0, 0, 0),
+    AutomaticSize = Enum.AutomaticSize.Y,
+    BackgroundColor3 = Theme.Surface,
+    BorderSizePixel = 0,
+    LayoutOrder = 3,
+    Parent = body,
+}, {
+    New("UICorner", { CornerRadius = UDim.new(0, 12) }),
+    New("UIStroke", { Color = Theme.Border, Thickness = 1, Transparency = 0.4 }),
+    New("UIPadding", {
+        PaddingTop = UDim.new(0, 6),
+        PaddingBottom = UDim.new(0, 6),
+        PaddingLeft = UDim.new(0, 10),
+        PaddingRight = UDim.new(0, 10),
+    }),
+    New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4) }),
+})
+
+local toggleRefresh = {}
+
+local function Toggle(label, key, order)
+    local row = New("TextButton", {
+        Text = "",
+        Size = UDim2.new(1, 0, 0, 34),
+        BackgroundTransparency = 1,
+        AutoButtonColor = false,
+        LayoutOrder = order,
+        Parent = togglesCard,
+    })
+
+    New("TextLabel", {
+        Text = label,
+        Font = Enum.Font.GothamMedium,
+        TextSize = 13,
+        TextColor3 = Theme.Text,
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Size = UDim2.new(1, -50, 1, 0),
+        Parent = row,
+    })
+
+    local track = New("Frame", {
+        AnchorPoint = Vector2.new(1, 0.5),
+        Position = UDim2.new(1, 0, 0.5, 0),
+        Size = UDim2.fromOffset(38, 22),
+        BackgroundColor3 = Theme.Track,
+        BorderSizePixel = 0,
+        Parent = row,
+    }, { New("UICorner", { CornerRadius = UDim.new(1, 0) }) })
+
+    local thumb = New("Frame", {
+        AnchorPoint = Vector2.new(0, 0.5),
+        Position = UDim2.new(0, 3, 0.5, 0),
+        Size = UDim2.fromOffset(16, 16),
+        BackgroundColor3 = Theme.TextDim,
+        BorderSizePixel = 0,
+        Parent = track,
+    }, { New("UICorner", { CornerRadius = UDim.new(1, 0) }) })
+
+    local function Refresh()
+        local on = config[key]
+        TweenService:Create(track, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            BackgroundColor3 = on and Theme.Accent or Theme.Track,
+        }):Play()
+        TweenService:Create(thumb, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            Position = on and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
+            BackgroundColor3 = on and Theme.Bg or Theme.TextDim,
+        }):Play()
     end
 
+    table.insert(toggleRefresh, Refresh)
+    row.MouseButton1Click:Connect(function()
+        config[key] = not config[key]
+        Refresh()
+    end)
+    Refresh()
+end
+
+Toggle("Anti-AFK", "AntiAfk", 1)
+Toggle("Hide reward popups", "HidePopups", 2)
+
+local startBtn = New("TextButton", {
+    Text = "Start Farming",
+    Font = Enum.Font.GothamBold,
+    TextSize = 14,
+    TextColor3 = Theme.Bg,
+    BackgroundColor3 = Theme.Accent,
+    AutoButtonColor = false,
+    BorderSizePixel = 0,
+    Size = UDim2.new(1, 0, 0, 46),
+    LayoutOrder = 4,
+    Parent = body,
+}, { New("UICorner", { CornerRadius = UDim.new(0, 12) }) })
+
+startBtn.MouseEnter:Connect(function()
+    if not Runtime.Farming then
+        TweenService:Create(startBtn, TweenInfo.new(0.15), { BackgroundColor3 = Theme.AccentSoft }):Play()
+    end
+end)
+startBtn.MouseLeave:Connect(function()
+    if not Runtime.Farming then
+        TweenService:Create(startBtn, TweenInfo.new(0.15), { BackgroundColor3 = Theme.Accent }):Play()
+    end
+end)
+
+local autoBtn = New("TextButton", {
+    Text = "Auto Farm (Server Hop)",
+    Font = Enum.Font.GothamBold,
+    TextSize = 12,
+    TextColor3 = Theme.Accent,
+    BackgroundColor3 = Theme.SurfaceAlt,
+    AutoButtonColor = false,
+    BorderSizePixel = 0,
+    Size = UDim2.new(1, 0, 0, 36),
+    LayoutOrder = 5,
+    Parent = body,
+}, {
+    New("UICorner", { CornerRadius = UDim.new(0, 10) }),
+    New("UIStroke", { Color = Theme.Accent, Thickness = 1, Transparency = 0.5 }),
+})
+
+autoBtn.MouseEnter:Connect(function()
+    TweenService:Create(autoBtn, TweenInfo.new(0.15), { BackgroundColor3 = Theme.Border }):Play()
+end)
+autoBtn.MouseLeave:Connect(function()
+    TweenService:Create(autoBtn, TweenInfo.new(0.15), { BackgroundColor3 = Theme.SurfaceAlt }):Play()
+end)
+
+RefreshUI = function()
+    for _, candy in ipairs(Candy) do
+        candyRefs[candy.DataName].Text = tostring(Session.Candy[candy.DataName] or 0)
+    end
+
+    local elapsed = Session.Mark and (os.time() - Session.Mark) or 0
+    local sec = math.floor(elapsed)
+    timeVal.Text = string.format("%02d:%02d:%02d", math.floor(sec / 3600), math.floor((sec % 3600) / 60), sec % 60)
+    housesVal.Text = tostring(Session.Houses)
+
+    local total = 0
+    for _, v in pairs(Session.Candy) do total = total + v end
+    totalVal.Text = tostring(total) .. " candy"
+
+    if Runtime.Reconnecting then
+        startBtn.Text = "Reconnecting..."
+        startBtn.BackgroundColor3 = Theme.Danger
+        startBtn.TextColor3 = Theme.Text
+        statusText.Text = "reconnect"
+        statusDot.BackgroundColor3 = Theme.Danger
+    elseif Runtime.Farming then
+        startBtn.Text = "Stop Farming"
+        startBtn.BackgroundColor3 = Theme.Danger
+        startBtn.TextColor3 = Theme.Text
+        statusText.Text = "farming"
+        statusDot.BackgroundColor3 = Theme.Success
+    else
+        startBtn.Text = "Start Farming"
+        startBtn.BackgroundColor3 = Theme.Accent
+        startBtn.TextColor3 = Theme.Bg
+        statusText.Text = "idle"
+        statusDot.BackgroundColor3 = Theme.TextMuted
+    end
+
+    for _, r in ipairs(toggleRefresh) do r() end
+end
+
+startBtn.MouseButton1Click:Connect(function()
+    if Runtime.Reconnecting then return end
+    if Runtime.Farming then StopFarm() else StartFarm() end
+end)
+
+autoBtn.MouseButton1Click:Connect(function()
+    if Runtime.Reconnecting then return end
+    gs.CandyFarmAutoStart = true
+    gs.CandyFarmUnload()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Fantom233/BABFT/refs/heads/main/LoopCandyFarm.lua"))()
+end)
+
+closeBtn.MouseButton1Click:Connect(function() gs.CandyFarmUnload() end)
+
+local dragging, dragStart, dragPos = false, nil, nil
+header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        isDragging = true
-        dragStartMouse = Vector2.new(input.Position.X, input.Position.Y)
-        dragStartPosition = Window.Position
+        dragging, dragStart, dragPos = true, input, main.Position
     end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
-    if not isDragging then
-        return
+    if not dragging then return end
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input == dragStart then
+        local delta = input.Position - dragStart.Position
+        main.Position = UDim2.fromOffset(dragPos.X.Offset + delta.X, dragPos.Y.Offset + delta.Y)
     end
-
-    if input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then
-        return
-    end
-
-    if not Window or not Window.Parent then
-        isDragging = false
-        return
-    end
-
-    local currentMouse = Vector2.new(input.Position.X, input.Position.Y)
-    local delta = currentMouse - dragStartMouse
-
-    Window.Position = UDim2.new(
-        dragStartPosition.X.Scale,
-        dragStartPosition.X.Offset + delta.X,
-        dragStartPosition.Y.Scale,
-        dragStartPosition.Y.Offset + delta.Y
-    )
 end)
-
 UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        isDragging = false
+    if dragging and (input == dragStart or input.UserInputType == Enum.UserInputType.MouseButton1) then
+        dragging = false
     end
 end)
 
-local TabBar = Instance.new("Frame")
-TabBar.Name = "TabBar"
-TabBar.Size = UDim2.new(1, -20, 0, 38)
-TabBar.Position = UDim2.new(0, 10, 0, 64)
-TabBar.BackgroundTransparency = 1
-TabBar.Parent = Window
-
-local TabBarLayout = Instance.new("UIListLayout")
-TabBarLayout.FillDirection = Enum.FillDirection.Horizontal
-TabBarLayout.Padding = UDim.new(0, 4)
-TabBarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-TabBarLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-TabBarLayout.Parent = TabBar
-
-local ContentArea = Instance.new("Frame")
-ContentArea.Name = "Content"
-ContentArea.Size = UDim2.new(1, -20, 1, -122)
-ContentArea.Position = UDim2.new(0, 10, 0, 110)
-ContentArea.BackgroundColor3 = Theme.ContentBg
-ContentArea.BorderSizePixel = 0
-ContentArea.Parent = Window
-
-local ContentAreaCorner = Instance.new("UICorner")
-ContentAreaCorner.CornerRadius = UDim.new(0, 8)
-ContentAreaCorner.Parent = ContentArea
-
-local ContentAreaStroke = Instance.new("UIStroke")
-ContentAreaStroke.Color = Theme.Border
-ContentAreaStroke.Thickness = 1
-ContentAreaStroke.Transparency = 0.5
-ContentAreaStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-ContentAreaStroke.Parent = ContentArea
-
-local tabs = {}
-local activeTabName = nil
-
-local function switchTab(tabName)
-    if activeTabName == tabName then
-        return
-    end
-
-    for name, tabInfo in pairs(tabs) do
-        if name == tabName then
-            tabInfo.Button.BackgroundColor3 = Theme.TabActiveBg
-            tabInfo.TextLabel.TextColor3 = Theme.TabTextActive
-            tabInfo.Content.Visible = true
-        else
-            tabInfo.Button.BackgroundColor3 = Theme.TabInactiveBg
-            tabInfo.TextLabel.TextColor3 = Theme.TabTextInactive
-            tabInfo.Content.Visible = false
-        end
-    end
-
-    activeTabName = tabName
-end
-
-local function createTab(tabKey, displayName)
-    local tabButton = Instance.new("TextButton")
-    tabButton.Name = tabKey .. "TabButton"
-    tabButton.Size = UDim2.new(0.25, -3, 1, 0)
-    tabButton.BackgroundColor3 = Theme.TabInactiveBg
-    tabButton.BorderSizePixel = 0
-    tabButton.Text = ""
-    tabButton.AutoButtonColor = false
-    tabButton.Parent = TabBar
-
-    local tabButtonCorner = Instance.new("UICorner")
-    tabButtonCorner.CornerRadius = UDim.new(0, 8)
-    tabButtonCorner.Parent = tabButton
-
-    local tabTextLabel = Instance.new("TextLabel")
-    tabTextLabel.Name = "TextLabel"
-    tabTextLabel.Size = UDim2.new(1, 0, 1, 0)
-    tabTextLabel.BackgroundTransparency = 1
-    tabTextLabel.Font = Enum.Font.GothamBold
-    tabTextLabel.TextSize = 10
-    tabTextLabel.TextColor3 = Theme.TabTextInactive
-    tabTextLabel.Text = displayName
-    tabTextLabel.Parent = tabButton
-
-    local tabContent = Instance.new("ScrollingFrame")
-    tabContent.Name = tabKey .. "TabContent"
-    tabContent.Size = UDim2.new(1, -16, 1, -16)
-    tabContent.Position = UDim2.new(0, 8, 0, 8)
-    tabContent.BackgroundTransparency = 1
-    tabContent.BorderSizePixel = 0
-    tabContent.ScrollBarThickness = 4
-    tabContent.ScrollBarImageColor3 = Theme.ScrollThumb
-    tabContent.ScrollBarImageTransparency = 0.3
-    tabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
-    tabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    tabContent.ScrollingDirection = Enum.ScrollingDirection.Y
-    tabContent.Visible = false
-    tabContent.Parent = ContentArea
-
-    local tabListLayout = Instance.new("UIListLayout")
-    tabListLayout.Padding = UDim.new(0, 8)
-    tabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    tabListLayout.Parent = tabContent
-
-    tabs[tabKey] = {
-        Button = tabButton,
-        TextLabel = tabTextLabel,
-        Content = tabContent,
-        Layout = tabListLayout,
-    }
-
-    tabButton.MouseEnter:Connect(function()
-        if activeTabName ~= tabKey then
-            Tween(tabButton, 0.15, {
-                BackgroundColor3 = Theme.TabHoverBg,
-            })
-        end
-    end)
-
-    tabButton.MouseLeave:Connect(function()
-        if activeTabName ~= tabKey then
-            Tween(tabButton, 0.15, {
-                BackgroundColor3 = Theme.TabInactiveBg,
-            })
-        end
-    end)
-
-    tabButton.MouseButton1Click:Connect(function()
-        switchTab(tabKey)
-    end)
-
-    return tabs[tabKey]
-end
-
-local function createLabel(tab, text, layoutOrder, colorOverride, wrapped)
-    local label = Instance.new("TextLabel")
-    label.Name = "Label"
-    label.Size = UDim2.new(1, 0, 0, wrapped and 0 or 22)
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.GothamMedium
-    label.TextSize = 12
-    label.TextColor3 = colorOverride or Theme.Text
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextYAlignment = Enum.TextYAlignment.Top
-    label.TextWrapped = wrapped or false
-    label.Text = text
-    label.LayoutOrder = layoutOrder
-
-    if wrapped then
-        label.AutomaticSize = Enum.AutomaticSize.Y
-    end
-
-    label.Parent = tab.Content
-    return label
-end
-
-local function createSeparator(tab, text, layoutOrder)
-    local separator = Instance.new("Frame")
-    separator.Name = "Separator"
-    separator.Size = UDim2.new(1, 0, 0, 30)
-    separator.BackgroundTransparency = 1
-    separator.LayoutOrder = layoutOrder
-    separator.Parent = tab.Content
-
-    local separatorText = Instance.new("TextLabel")
-    separatorText.Name = "Text"
-    separatorText.Size = UDim2.new(1, 0, 0, 20)
-    separatorText.BackgroundTransparency = 1
-    separatorText.Font = Enum.Font.GothamBold
-    separatorText.TextSize = 10
-    separatorText.TextColor3 = Theme.TextMuted
-    separatorText.TextXAlignment = Enum.TextXAlignment.Left
-    separatorText.Text = string.upper(text)
-    separatorText.Parent = separator
-
-    local separatorLine = Instance.new("Frame")
-    separatorLine.Name = "Line"
-    separatorLine.Size = UDim2.new(1, 0, 0, 1)
-    separatorLine.Position = UDim2.new(0, 0, 0, 26)
-    separatorLine.BackgroundColor3 = Theme.SeparatorLine
-    separatorLine.BackgroundTransparency = 0.3
-    separatorLine.BorderSizePixel = 0
-    separatorLine.Parent = separator
-
-    return separator
-end
-
-local function createButton(tab, text, layoutOrder, initialColor, callback)
-    local baseColor = initialColor
-    local isHovering = false
-
-    local button = Instance.new("TextButton")
-    button.Name = "Button"
-    button.Size = UDim2.new(1, 0, 0, 40)
-    button.BackgroundColor3 = baseColor
-    button.BorderSizePixel = 0
-    button.Text = text
-    button.Font = Enum.Font.GothamBold
-    button.TextSize = 13
-    button.TextColor3 = Theme.Text
-    button.AutoButtonColor = false
-    button.LayoutOrder = layoutOrder
-    button.Parent = tab.Content
-
-    local buttonCorner = Instance.new("UICorner")
-    buttonCorner.CornerRadius = UDim.new(0, 8)
-    buttonCorner.Parent = button
-
-    local buttonApi = {
-        Instance = button,
-        SetText = function(newText)
-            button.Text = newText
-        end,
-        SetColor = function(newColor)
-            baseColor = newColor
-            if isHovering then
-                button.BackgroundColor3 = newColor:Lerp(Color3.new(1, 1, 1), 0.15)
-            else
-                button.BackgroundColor3 = newColor
-            end
-        end,
-    }
-
-    button.MouseEnter:Connect(function()
-        isHovering = true
-        Tween(button, 0.15, {
-            BackgroundColor3 = baseColor:Lerp(Color3.new(1, 1, 1), 0.15),
-        })
-    end)
-
-    button.MouseLeave:Connect(function()
-        isHovering = false
-        Tween(button, 0.15, {
-            BackgroundColor3 = baseColor,
-        })
-    end)
-
-    button.MouseButton1Down:Connect(function()
-        Tween(button, 0.1, {
-            BackgroundColor3 = baseColor:Lerp(Color3.new(0, 0, 0), 0.2),
-        })
-    end)
-
-    button.MouseButton1Up:Connect(function()
-        if isHovering then
-            Tween(button, 0.15, {
-                BackgroundColor3 = baseColor:Lerp(Color3.new(1, 1, 1), 0.15),
-            })
-        else
-            Tween(button, 0.15, {
-                BackgroundColor3 = baseColor,
-            })
-        end
-    end)
-
-    button.MouseButton1Click:Connect(function()
-        if callback then
-            callback(buttonApi)
-        end
-    end)
-
-    return buttonApi
-end
-
-local function createCheckbox(tab, text, initialValue, layoutOrder, callback)
-    local currentValue = initialValue
-
-    local checkboxButton = Instance.new("TextButton")
-    checkboxButton.Name = "Checkbox"
-    checkboxButton.Size = UDim2.new(1, 0, 0, 30)
-    checkboxButton.BackgroundTransparency = 1
-    checkboxButton.Text = ""
-    checkboxButton.AutoButtonColor = false
-    checkboxButton.LayoutOrder = layoutOrder
-    checkboxButton.Parent = tab.Content
-
-    local checkboxBox = Instance.new("Frame")
-    checkboxBox.Name = "Box"
-    checkboxBox.Size = UDim2.fromOffset(22, 22)
-    checkboxBox.Position = UDim2.new(0, 4, 0.5, -11)
-    checkboxBox.BackgroundColor3 = initialValue and Theme.CheckOn or Theme.CheckOff
-    checkboxBox.BorderSizePixel = 0
-    checkboxBox.Parent = checkboxButton
-
-    local checkboxBoxCorner = Instance.new("UICorner")
-    checkboxBoxCorner.CornerRadius = UDim.new(0, 5)
-    checkboxBoxCorner.Parent = checkboxBox
-
-    local checkboxBoxStroke = Instance.new("UIStroke")
-    checkboxBoxStroke.Color = Theme.CheckBorder
-    checkboxBoxStroke.Thickness = 1
-    checkboxBoxStroke.Transparency = 0.3
-    checkboxBoxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    checkboxBoxStroke.Parent = checkboxBox
-
-    local checkmark = Instance.new("TextLabel")
-    checkmark.Name = "Checkmark"
-    checkmark.Size = UDim2.new(1, 0, 1, 0)
-    checkmark.BackgroundTransparency = 1
-    checkmark.Font = Enum.Font.GothamBold
-    checkmark.TextSize = 16
-    checkmark.TextColor3 = Color3.fromRGB(255, 255, 255)
-    checkmark.Text = "X"
-    checkmark.TextTransparency = initialValue and 0 or 1
-    checkmark.Parent = checkboxBox
-
-    local checkboxLabel = Instance.new("TextLabel")
-    checkboxLabel.Name = "Label"
-    checkboxLabel.Size = UDim2.new(1, -40, 1, 0)
-    checkboxLabel.Position = UDim2.new(0, 34, 0, 0)
-    checkboxLabel.BackgroundTransparency = 1
-    checkboxLabel.Font = Enum.Font.GothamMedium
-    checkboxLabel.TextSize = 12
-    checkboxLabel.TextColor3 = Theme.Text
-    checkboxLabel.TextXAlignment = Enum.TextXAlignment.Left
-    checkboxLabel.Text = text
-    checkboxLabel.Parent = checkboxButton
-
-    local function updateVisual(newState)
-        currentValue = newState
-        if newState then
-            Tween(checkboxBox, 0.2, {
-                BackgroundColor3 = Theme.CheckOn,
-            })
-            Tween(checkmark, 0.15, {
-                TextTransparency = 0,
-            })
-        else
-            Tween(checkboxBox, 0.2, {
-                BackgroundColor3 = Theme.CheckOff,
-            })
-            Tween(checkmark, 0.15, {
-                TextTransparency = 1,
-            })
-        end
-    end
-
-    checkboxButton.MouseButton1Click:Connect(function()
-        updateVisual(not currentValue)
-        if callback then
-            callback(currentValue)
-        end
-    end)
-
-    return {
-        SetValue = function(value)
-            updateVisual(value)
-        end,
-        GetValue = function()
-            return currentValue
-        end,
-    }
-end
-
-local FarmTab = createTab("Farm", "Farm")
-
-createSeparator(FarmTab, "Candy Farm - This Server", 1)
-
-createCheckbox(FarmTab, "Anti-AFK", true, 2, function(value)
-    isAntiAfkEnabled = value
-    updateAntiAfk()
-end)
-
-createCheckbox(FarmTab, "Hide Reward Popups", true, 3, function(value)
-    isHidingPopups = value
-end)
-
-local farmButton = createButton(FarmTab, "Start Candy Farm", 4, Theme.ButtonPrimary, function(buttonApi)
-    if not isFarming then
-        isFarming = true
-        buttonApi.SetText("Stop Candy Farm")
-        buttonApi.SetColor(Theme.ButtonDanger)
-        performAutoFarm()
-        ShowNotification("Candy Farm", "Candy farm started for this server.", "success", 3)
-    else
-        isFarming = false
-        buttonApi.SetText("Start Candy Farm")
-        buttonApi.SetColor(Theme.ButtonPrimary)
-
-        local doorsToRelease = {}
-
-        for doorPart, connection in pairs(forcedPartConnections) do
-            table.insert(doorsToRelease, doorPart)
-        end
-
-        for _, doorPart in ipairs(doorsToRelease) do
-            local connection = forcedPartConnections[doorPart]
-            if connection then
-                connection:Disconnect()
-            end
-            if doorPart and doorPart.Parent then
-                doorPart:SetAttribute("Forced", nil)
-            end
-            forcedPartConnections[doorPart] = nil
-        end
-
-        ShowNotification("Candy Farm", "Candy farm stopped.", "info", 3)
-    end
-end)
-
-createSeparator(FarmTab, "Statistics", 5)
-
-local timeElapsedLabel = createLabel(FarmTab, "Time Elapsed: 00:00:00", 6)
-local totalHousesLabel = createLabel(FarmTab, "Total Houses: 0", 7)
-local fakeHousesLabel = createLabel(FarmTab, "Fake Houses: 0", 8)
-local totalCandyLabel = createLabel(FarmTab, "Total Candy: 0", 9)
-
-local candyLabels = {}
-local candyLabelOrder = 10
-
-for _, candyInfo in ipairs(candyDataNames) do
-    candyLabels[candyInfo.key] = createLabel(
-        FarmTab,
-        string.format("%s: 0", candyInfo.label),
-        candyLabelOrder
+local function ClampPos()
+    local vp = screen.AbsoluteSize
+    local sz = main.AbsoluteSize
+    main.Position = UDim2.fromOffset(
+        math.clamp(main.Position.X.Offset, 8, math.max(8, vp.X - sz.X - 8)),
+        math.clamp(main.Position.Y.Offset, 8, math.max(8, vp.Y - sz.Y - 8))
     )
-    candyLabelOrder = candyLabelOrder + 1
 end
 
-housesAddedConnection = Houses.ChildAdded:Connect(function()
-    if not isFarming then
-        return
-    end
+local function FitScale()
+    local vp = screen.AbsoluteSize
+    if vp.X < 1 or vp.Y < 1 then return end
+    local cur = scale.Scale > 0 and scale.Scale or 1
+    local unscaled = main.AbsoluteSize / cur
+    scale.Scale = math.clamp(math.min(1, (vp.X - 16) / unscaled.X, (vp.Y - 16) / math.max(unscaled.Y, 1)), 0.5, 1)
+    ClampPos()
+end
 
-    task.wait(0.3)
+local minimized = false
+minBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    body.Visible = not minimized
+    FitScale()
+end)
 
-    if isFarming then
-        performAutoFarm()
+main.Position = UDim2.fromOffset(20, math.max(20, (viewport.Y - 400) / 2))
+if minimized then body.Visible = false end
+RefreshUI()
+FitScale()
+
+screen:GetPropertyChangedSignal("AbsoluteSize"):Connect(FitScale)
+main:GetPropertyChangedSignal("AbsoluteSize"):Connect(ClampPos)
+
+TweenService:Create(main, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
+
+local pulseOn = false
+task.spawn(function()
+    while Runtime.Running do
+        task.wait(0.8)
+        if (Runtime.Farming or Runtime.Reconnecting) and statusDot.Parent then
+            pulseOn = not pulseOn
+            TweenService:Create(statusDot, TweenInfo.new(0.7), { BackgroundTransparency = pulseOn and 0.7 or 0 }):Play()
+        end
     end
 end)
 
-local function formatElapsedTime(totalSeconds)
-    local hours = math.floor(totalSeconds / 3600)
-    local minutes = math.floor((totalSeconds % 3600) / 60)
-    local seconds = totalSeconds % 60
-    return string.format("%02d:%02d:%02d", hours, minutes, seconds)
-end
-
 task.spawn(function()
-    while isScriptActive do
-        if isHidingPopups then
-            pcall(function()
-                StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, true)
-            end)
-            setItemGainedScriptEnabled(false)
-        else
-            setItemGainedScriptEnabled(true)
-        end
-        task.wait(0.1)
-    end
-end)
-
-task.spawn(function()
-    while isScriptActive do
-        if isFarming then
-            elapsedSeconds = elapsedSeconds + 1
-
-            if timeElapsedLabel then
-                timeElapsedLabel.Text = "Time Elapsed: " .. formatElapsedTime(elapsedSeconds)
-            end
-
-            local totalGained = 0
-
-            for _, candyInfo in ipairs(candyDataNames) do
-                local currentValue = getDataValue(candyInfo.dataName)
-                local gainedAmount = currentValue - initialCandyValues[candyInfo.key]
-                totalGained = totalGained + gainedAmount
-
-                local candyLabel = candyLabels[candyInfo.key]
-                if candyLabel then
-                    candyLabel.Text = string.format("%s: %d", candyInfo.label, gainedAmount)
-                end
-            end
-
-            local fakeHouseCount = totalHousesClaimed - totalGained
-
-            if totalHousesLabel then
-                totalHousesLabel.Text = string.format("Total Houses: %d", totalHousesClaimed)
-            end
-
-            if fakeHousesLabel then
-                fakeHousesLabel.Text = string.format("Fake Houses: %d", fakeHouseCount)
-            end
-
-            if totalCandyLabel then
-                totalCandyLabel.Text = string.format("Total Candy: %d", totalGained)
-            end
-        end
+    while Runtime.Running do
         task.wait(1)
+        if Runtime.Farming and RefreshUI then RefreshUI() end
+        if config.HidePopups then HidePopup() end
     end
 end)
 
-local AutoTab = createTab("AutoFarm", "AutoFarm")
+gs.CandyFarmUnload = function()
+    if not Runtime.Running then return end
+    Runtime.Running = false
+    Runtime.Farming = false
+    screen:Destroy()
+    if hiddenPopup then hiddenPopup.Disabled = false end
+    gs.CandyFarmUnload = nil
+end
 
-createSeparator(AutoTab, "Candy Farm with Server Hop", 1)
-
-local autoFarmButton = createButton(AutoTab, "Start Auto Farm", 2, Theme.ButtonPrimary, function(buttonApi)
-    if hasAutoFarmStarted then
-        ShowNotification("Auto Farm", "Auto farm is already running.", "info", 2)
-        return
-    end
-
-    buttonApi.SetText("Starting...")
-    buttonApi.SetColor(Theme.ButtonNeutral)
-
-    isFarming = true
-    performAutoFarm()
-
-    local loadSuccess = pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/Fantom233/BABFT/refs/heads/main/LoopCandyFarm.lua"))()
-    end)
-
-    if not loadSuccess then
-        isFarming = false
-        buttonApi.SetText("Failed to load")
-        buttonApi.SetColor(Theme.ButtonDanger)
-
-        task.wait(2)
-
-        buttonApi.SetText("Start Auto Farm")
-        buttonApi.SetColor(Theme.ButtonPrimary)
-
-        ShowNotification("Auto Farm", "Failed to start auto farm. Please try again.", "error", 4)
-        return
-    end
-
-    hasAutoFarmStarted = true
-    buttonApi.SetText("Started!")
-    buttonApi.SetColor(Theme.ButtonSuccess)
-    ShowNotification("Auto Farm", "Auto farm is starting. Sit tight.", "success", 4)
-end)
-
-createSeparator(AutoTab, "Important", 3)
-
-createLabel(
-    AutoTab,
-    "This method claims houses and then hops to a different server. It is the most efficient way to farm candy, but not all executors support it. If you want to play BABFT while farming candy, use the Farm tab.",
-    4,
-    Theme.TextMuted,
-    true
-)
-
-createLabel(
-    AutoTab,
-    "Once started, the only way to stop it is to close Roblox. The interface will not appear in the next server, but the farming will continue.",
-    5,
-    Theme.ButtonPrimary,
-    true
-)
-
-local InfoTab = createTab("Info", "Info")
-
-createSeparator(InfoTab, "How to Use", 1)
-
-createLabel(
-    InfoTab,
-    "Do not toggle 'Hide Reward Popups' while auto farming. Enable it only when there is no reward card on your screen.",
-    2,
-    Theme.Text,
-    true
-)
-
-createLabel(
-    InfoTab,
-    "You can do other things at the same time as farming candy.",
-    3,
-    Theme.ButtonPrimary,
-    true
-)
-
-createSeparator(InfoTab, "Candy Types", 4)
-
-createLabel(InfoTab, "Blue Candy - shrinks the player permanently until death.", 5, Theme.TextMuted, true)
-createLabel(InfoTab, "Yellow (Orange) Candy - 30% speed boost for 3 minutes.", 6, Theme.TextMuted, true)
-createLabel(InfoTab, "Purple Candy - 900% jump boost for 3 minutes.", 7, Theme.TextMuted, true)
-createLabel(InfoTab, "Pink Candy - combines Yellow and Purple effects for 3 minutes.", 8, Theme.TextMuted, true)
-createLabel(InfoTab, "Red Candy - enlarges the player permanently until death (no longer obtainable).", 9, Theme.TextMuted, true)
-
-createSeparator(InfoTab, "About This Script", 10)
-
-createLabel(InfoTab, "This script is free, keyless, and open source.", 11, Theme.Text, true)
-
-local CreditsTab = createTab("Credits", "Credits")
-
-createSeparator(CreditsTab, "Author", 1)
-
-createLabel(CreditsTab, "Asu", 2, Theme.Text, true)
-
-createSeparator(CreditsTab, "Note", 3)
-
-createLabel(
-    CreditsTab,
-    "If you enjoy this script, share it with your friends. Thanks for using it. Happy Halloween!",
-    4,
-    Theme.TextMuted,
-    true
-)
-
-switchTab("Farm")
-
-updateAntiAfk()
-
-CloseButton.MouseButton1Click:Connect(function()
-    if isClosing then
-        return
-    end
-
-    isClosing = true
-    isScriptActive = false
-    isFarming = false
-
-    if antiAfkConnection then
-        antiAfkConnection:Disconnect()
-        antiAfkConnection = nil
-    end
-
-    if housesAddedConnection then
-        housesAddedConnection:Disconnect()
-        housesAddedConnection = nil
-    end
-
-    local doorsToRelease = {}
-
-    for doorPart, connection in pairs(forcedPartConnections) do
-        table.insert(doorsToRelease, doorPart)
-    end
-
-    for _, doorPart in ipairs(doorsToRelease) do
-        local connection = forcedPartConnections[doorPart]
-        if connection then
-            connection:Disconnect()
-        end
-        if doorPart and doorPart.Parent then
-            doorPart:SetAttribute("Forced", nil)
-        end
-        forcedPartConnections[doorPart] = nil
-    end
-
-    setItemGainedScriptEnabled(true)
-    MainGui:Destroy()
-    NotificationGui:Destroy()
-end)
-
-task.delay(0.5, function()
-    if not isScriptActive then
-        return
-    end
-
-    ShowNotification("Candy Farm", "Script loaded successfully. Ready to hunt candy!", "success", 4)
-end)
+if gs.CandyFarmFromHop then
+    gs.CandyFarmFromHop = nil
+end
