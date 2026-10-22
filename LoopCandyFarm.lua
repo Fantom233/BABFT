@@ -49,10 +49,10 @@ local Runtime = {
     Reconnecting = false,
     Running = true,
     CandyGained = false,
+    StopRequested = false,
 }
 local Session = { Candy = {}, Houses = 0, Servers = 0, Mark = nil }
 local Visited = {}
-
 local serverList = {}
 local hiddenPopup = nil
 local RefreshUI
@@ -140,7 +140,7 @@ GuiService.ErrorMessageChanged:Connect(function()
     queue_on_teleport("if not game:IsLoaded() then game.Loaded:Wait() end getgenv().CandyFarmFromHop = true loadstring(game:HttpGet('https://raw.githubusercontent.com/Fantom233/BABFT/refs/heads/main/LoopCandyFarm.lua'))()")
 
     task.spawn(function()
-        while Runtime.Reconnecting do
+        while Runtime.Reconnecting and Runtime.Running do
             TeleportService:Teleport(537413528, LocalPlayer)
             task.wait(5)
         end
@@ -159,18 +159,26 @@ end
 
 local function ClaimAll()
     local root = Runtime.Root
-    local houses = workspace.Houses
+    local houses = workspace:FindFirstChild("Houses")
+    if not root or not houses then return 0 end
+
     local count = 0
 
     for _, house in ipairs(houses:GetChildren()) do
         if not Runtime.Claimed[house] then
             local door = house:FindFirstChild("DoorInnerTouch", true)
             if door then
+                local savedCFrame = door.CFrame
                 door.CFrame = root.CFrame
                 door.CanCollide = false
                 door.Transparency = 1
                 firetouchinterest(root, door, 0)
                 firetouchinterest(root, door, 1)
+                task.delay(0.05, function()
+                    if door.Parent then
+                        door.CFrame = savedCFrame
+                    end
+                end)
                 Runtime.Claimed[house] = true
                 count = count + 1
             end
@@ -188,33 +196,31 @@ local function ClaimAll()
     return count
 end
 
-local function WaitForCandy(timeout)
-    local deadline = os.clock() + timeout
-    while not Runtime.CandyGained and os.clock() < deadline do
-        task.wait(0.025)
-    end
-    return Runtime.CandyGained
-end
-
-local function WaitForStable(timeout)
-    local deadline = os.clock() + timeout
-    local lastGain = 0
+local function WaitForCandyBurst(maxWait)
+    local deadline = os.clock() + maxWait
     local firstGain = nil
+    local lastGain = 0
 
     while os.clock() < deadline do
+        if Runtime.StopRequested then return false end
         if Runtime.CandyGained then
             Runtime.CandyGained = false
             if not firstGain then firstGain = os.clock() end
             lastGain = os.clock()
         end
-        if firstGain and (os.clock() - lastGain) > 0.5 then break end
-        task.wait(0.025)
+        if firstGain and (os.clock() - lastGain) >= 0.5 then return true end
+        task.wait(0.02)
     end
 
     return firstGain ~= nil
 end
 
 local function HopTo(server)
+    if not server or Runtime.StopRequested or not config.Loop then
+        Runtime.Hopping = false
+        return
+    end
+
     Runtime.Hopping = true
     Visited[server.Id] = os.time()
     Session.Servers = Session.Servers + 1
@@ -224,7 +230,7 @@ local function HopTo(server)
 
     TeleportService:TeleportToPlaceInstance(537413528, server.Id, LocalPlayer)
 
-    task.wait(3)
+    task.wait(2)
     Runtime.Hopping = false
 end
 
@@ -242,46 +248,65 @@ end
 local function RunLoop()
     if Runtime.Farming then return end
     Runtime.Farming = true
+    Runtime.StopRequested = false
     Session.Mark = Session.Mark or os.time()
     Runtime.Claimed = {}
     if RefreshUI then RefreshUI() end
 
     local deadline = os.clock() + 20
     while not Runtime.Root and os.clock() < deadline do
+        if Runtime.StopRequested then
+            Runtime.Farming = false
+            return
+        end
         task.wait(0.1)
     end
 
     while Runtime.Running and config.Loop do
-        local houses = workspace:FindFirstChild("Houses")
-        if houses then break end
+        if workspace:FindFirstChild("Houses") then break end
         task.wait(0.3)
     end
 
-    if not config.Loop then
+    if not config.Loop or Runtime.StopRequested then
         Runtime.Farming = false
         return
     end
 
-    Runtime.CandyGained = false
-    ClaimAll()
+    while Runtime.Running and config.Loop and not Runtime.StopRequested do
+        Runtime.CandyGained = false
+        local claimed = ClaimAll()
+        if claimed > 0 then
+            local got = WaitForCandyBurst(8)
+            Runtime.Farming = false
+            if RefreshUI then RefreshUI() end
 
-    local gotCandy = WaitForStable(8)
+            if Runtime.StopRequested or not config.Loop then
+                return
+            end
+
+            local server = PickServer()
+            if got and server then
+                HopTo(server)
+                return
+            end
+
+            if server then
+                HopTo(server)
+                return
+            end
+        else
+            task.wait(0.3)
+        end
+    end
+
     Runtime.Farming = false
-
-    local server = PickServer()
-    if not server then
-        if RefreshUI then RefreshUI() end
-        task.wait(2)
-        return
-    end
-
-    if gotCandy or Session.Houses > 0 then
-        HopTo(server)
-    end
+    if RefreshUI then RefreshUI() end
 end
 
 local function StartLoop()
+    if config.Loop or Runtime.Farming then return end
     config.Loop = true
+    Runtime.StopRequested = false
     Session.Mark = os.time()
     task.spawn(RunLoop)
     if RefreshUI then RefreshUI() end
@@ -290,6 +315,8 @@ end
 local function StopLoop()
     config.Loop = false
     Runtime.Farming = false
+    Runtime.StopRequested = true
+    Runtime.Hopping = false
     if RefreshUI then RefreshUI() end
 end
 
@@ -847,7 +874,7 @@ local pulseOn = false
 task.spawn(function()
     while Runtime.Running do
         task.wait(0.8)
-        if (Runtime.Farming or Runtime.Reconnecting) and statusDot.Parent then
+        if (Runtime.Farming or Runtime.Reconnecting or Runtime.Hopping) and statusDot.Parent then
             pulseOn = not pulseOn
             TweenService:Create(statusDot, TweenInfo.new(0.7), { BackgroundTransparency = pulseOn and 0.7 or 0 }):Play()
         end
@@ -866,6 +893,7 @@ gs.CandyFarmLoopUnload = function()
     if not Runtime.Running then return end
     Runtime.Running = false
     Runtime.Farming = false
+    Runtime.StopRequested = true
     config.Loop = false
     screen:Destroy()
     if hiddenPopup then hiddenPopup.Disabled = false end
