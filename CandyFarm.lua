@@ -116,18 +116,26 @@ end
 
 local function ClaimAll()
     local root = Runtime.Root
-    local houses = workspace.Houses
+    local houses = workspace:FindFirstChild("Houses")
+    if not root or not houses then return 0 end
+
     local count = 0
 
     for _, house in ipairs(houses:GetChildren()) do
         if not Runtime.Claimed[house] then
             local door = house:FindFirstChild("DoorInnerTouch", true)
             if door then
+                local savedCFrame = door.CFrame
                 door.CFrame = root.CFrame
                 door.CanCollide = false
                 door.Transparency = 1
                 firetouchinterest(root, door, 0)
                 firetouchinterest(root, door, 1)
+                task.delay(0.05, function()
+                    if door.Parent then
+                        door.CFrame = savedCFrame
+                    end
+                end)
                 Runtime.Claimed[house] = true
                 count = count + 1
             end
@@ -215,9 +223,7 @@ local header = New("Frame", {
     BorderSizePixel = 0,
     LayoutOrder = 1,
     Parent = main,
-}, {
-    New("UICorner", { CornerRadius = UDim.new(0, 16) }),
-})
+}, { New("UICorner", { CornerRadius = UDim.new(0, 16) }) })
 
 New("Frame", {
     Size = UDim2.new(1, 0, 0, 16),
@@ -246,9 +252,7 @@ New("Frame", {
     BackgroundColor3 = Theme.Accent,
     BorderSizePixel = 0,
     Parent = header,
-}, {
-    New("UICorner", { CornerRadius = UDim.new(1, 0) }),
-})
+}, { New("UICorner", { CornerRadius = UDim.new(1, 0) }) })
 
 New("TextLabel", {
     Text = "Candy Farm",
@@ -284,9 +288,7 @@ local statusDot = New("Frame", {
     BorderSizePixel = 0,
     LayoutOrder = 1,
     Parent = statusPill,
-}, {
-    New("UICorner", { CornerRadius = UDim.new(1, 0) }),
-})
+}, { New("UICorner", { CornerRadius = UDim.new(1, 0) }) })
 
 local statusText = New("TextLabel", {
     Text = "idle",
@@ -310,9 +312,7 @@ local function IconButton(x)
         BorderSizePixel = 0,
         AutoButtonColor = false,
         Parent = header,
-    }, {
-        New("UICorner", { CornerRadius = UDim.new(0, 8) }),
-    })
+    }, { New("UICorner", { CornerRadius = UDim.new(0, 8) }) })
 end
 
 local minBtn = IconButton(-66)
@@ -378,7 +378,7 @@ local candyRow = New("Frame", {
     }),
 })
 
-local candyLayout = New("UIListLayout", {
+New("UIListLayout", {
     FillDirection = Enum.FillDirection.Horizontal,
     VerticalAlignment = Enum.VerticalAlignment.Center,
     HorizontalAlignment = Enum.HorizontalAlignment.Center,
@@ -742,17 +742,6 @@ main:GetPropertyChangedSignal("AbsoluteSize"):Connect(ClampPos)
 
 TweenService:Create(main, TweenInfo.new(0.4, Enum.EasingStyle.Quint), { BackgroundTransparency = 0 }):Play()
 
-local pulseOn = false
-task.spawn(function()
-    while Runtime.Running do
-        task.wait(0.8)
-        if (Runtime.Farming or Runtime.Reconnecting) and statusDot.Parent then
-            pulseOn = not pulseOn
-            TweenService:Create(statusDot, TweenInfo.new(0.7), { BackgroundTransparency = pulseOn and 0.7 or 0 }):Play()
-        end
-    end
-end)
-
 task.spawn(function()
     while Runtime.Running do
         task.wait(1)
@@ -768,8 +757,4 @@ gs.CandyFarmUnload = function()
     screen:Destroy()
     if hiddenPopup then hiddenPopup.Disabled = false end
     gs.CandyFarmUnload = nil
-end
-
-if gs.CandyFarmFromHop then
-    gs.CandyFarmFromHop = nil
 end
